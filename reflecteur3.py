@@ -33,7 +33,7 @@ fig = plt.figure();
 
 ##### Estimation of psi #####
 def presolution(img, res, nbdirac, grid):
-	n0 = int(res/4.0)
+	n0 = int(res/2.0)
 	mu0 = sp.misc.imresize(img, (n0,n0))			
 	mu0 = mu0.astype(float)	
 	dens0 = ma.Density_2.from_image(mu0,[0,1,0,1]) 	
@@ -72,8 +72,13 @@ else:
 ##### Target density calculation #####
 n = 128								# Higher dimension number of pixels
 
-mu = sp.misc.imresize(img, (n,n));			# Image resizing while keeping proportions
+mu = sp.misc.imresize(img, (n,n));				# Image resizing while keeping proportions
 mu = mu.astype(float);   					# Transform into a float matrix
+
+plt.imshow(mu, interpolation='nearest', vmin=0, vmax=255, cmap=plt.get_cmap('gray'));
+plt.show()
+
+
 mumoy = np.sum(mu)/(n*n);	    				# Pixels average value
 dens = ma.Density_2.from_image(mu,[0,1,0,1]) 			# Density_2 object, contains triangulation points and their density.
 
