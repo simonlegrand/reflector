@@ -172,4 +172,5 @@ print "Execution time (seconds):", time.clock() - debut;
 
 plt.imshow(M, interpolation='nearest', vmin=0, vmax=255, cmap=plt.get_cmap('gray'));
 #plt.scatter(gx, gy);
+print pouet
 plt.show()

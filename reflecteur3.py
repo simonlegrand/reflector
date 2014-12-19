@@ -70,8 +70,7 @@ else:
 	img = image
 
 ##### Target density calculation #####
-n = 128								# Higher dimension number of pixels
-
+n = 128	
 mu = sp.misc.imresize(img, (n,n));				# Image resizing while keeping proportions
 mu = mu.astype(float);   					# Transform into a float matrix
 
