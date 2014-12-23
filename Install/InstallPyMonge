@@ -1,0 +1,59 @@
+Welcome to the PyMongeAmpere wiki!
+
+First of all, you have to download [MongeAmpere](https://github.com/mrgt/MongeAmpere). It's not necessary to compile it but PyMongeAmpere must be located in the same repository.
+
+Once you have installed all the dependencies, as explained [here](InstallingDependencies), building is rather straightforward. Create a out-of-source build folder:
+
+``` sh
+cd path/to/PyMongeAmpere/..
+mkdir PyMongeAmpere-build
+cd PyMongeAmpere-build
+```
+
+Configure and build:
+
+``` sh
+cmake ../PyMongeAmpere
+```
+
+``` sh
+make
+```
+
+## Dependencies installation
+
+sudo apt-get install cmake-curses-gui
+sudo apt-get install libboost-python-dev
+sudo apt-get install libeigen3-dev 
+sudo apt-get install python-scipy
+sudo apt-get install libcgal-dev
+sudo apt-get install cimg-dev
+
+sudo apt-get install python-dev
+sudo apt-get install libsuitesparse-dev 
+
+sudo apt-get install python-matplotlib
+
+
+# Pour systèmes plus anciens
+
+N'installez avec linuxbrew que les bibliothèque dont vous avez besoin.
+cd ~/.linuxbrew/Library/Formula
+gedit python.rb
+Rajouter à la variable args l88 --enable-shared pour installer la librairie dynamique
+
+brew install python
+brew install numpy
+brew install scipy
+brew install matplotlib
+brew install pillow
+
+brew install eigen
+cd ~/.linuxbrew/Library/Formula
+gedit boost.rb
+Enlever "python" entre les crochets l75.
+brew install boost
+
+ccmake ../PyMongeAmpere/ -DEIGEN3_INCLUDE_DIR=/home/ROCQ/mokaplan/slegrand/.linuxbrew/include/eigen3/ -DBoost_INCLUDE_DIR=/home/ROCQ/mokaplan/slegrand/.linuxbrew/Cellar/boost/1.56.0/include/ -DCMAKE_CXX_COMPILER=/home/ROCQ/mokaplan/common/opt/gcc/4.8.1/bin/g++ -DCMAKE_C_COMPILER=/home/ROCQ/mokaplan/common/opt/gcc/4.8.1/bin/gcc
+
+
