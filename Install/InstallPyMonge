@@ -56,4 +56,18 @@ brew install boost
 
 ccmake ../PyMongeAmpere/ -DEIGEN3_INCLUDE_DIR=/home/ROCQ/mokaplan/slegrand/.linuxbrew/include/eigen3/ -DBoost_INCLUDE_DIR=/home/ROCQ/mokaplan/slegrand/.linuxbrew/Cellar/boost/1.56.0/include/ -DCMAKE_CXX_COMPILER=/home/ROCQ/mokaplan/common/opt/gcc/4.8.1/bin/g++ -DCMAKE_C_COMPILER=/home/ROCQ/mokaplan/common/opt/gcc/4.8.1/bin/gcc
 
+## Pour OS X
+
+Mettre à jour les outils de développement.
+
+Installer homebrew
+
+brew install cmake
+brew install x11
+ln -s /opt/X11/include/X11 /usr/local/include/X11
+brew install cimg
+brew install cgal
+sudo easy-install pip
+sudo pip install pillow
+
 

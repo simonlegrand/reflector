@@ -52,7 +52,7 @@ if len(sys.argv) != 2:
 	print "**** Error : add an image as argument ****";
 	exit();
 
-##### Picture formatting #####
+##### Picture formating #####
 impath = sys.argv[1];
 image = sp.misc.imread(impath);	
 dims = np.shape(image);
@@ -172,5 +172,4 @@ print "Execution time (seconds):", time.clock() - debut;
 
 plt.imshow(M, interpolation='nearest', vmin=0, vmax=255, cmap=plt.get_cmap('gray'));
 #plt.scatter(gx, gy);
-print pouet
 plt.show()
