@@ -77,7 +77,7 @@ else:								# If the picture is widther than high
 	w = 1.0
 
 ##### Target density calculation #####
-n = 200
+n = 128 
 nlin = int(n * h)
 ncol = int(n * w)
 mu = sp.misc.imresize(img, (nlin,ncol))			# Image resizing while keeping proportions
@@ -92,7 +92,7 @@ mumoy = np.sum(mu)/(nlin*ncol)    						# Pixels average value
 dens = ma.Density_2.from_image(mu,[0,w,0,h]) 			# Density_2 object, contains triangulation points and their density.
 
 ##### Source diracs #####
-N = 200
+N = 100
 Nlin = int(N * h)
 Ncol = int(N * w)
 Ny = Nlin * Ncol
