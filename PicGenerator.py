@@ -32,10 +32,10 @@ if arg == "center":
 	for i in range(largeur):
 		for j in range(hauteur):
 			if (i>(largeur/2.0-rectanglew/2.0) and i<(largeur/2.0+rectanglew/2.0)) and (j>(hauteur/2.0-rectangleh/2.0) and j<(hauteur/2.0+rectangleh/2.0)):
-				img.putpixel((i, j),0)
+				img.putpixel((i, j),255)
 	
 			else:
-				img.putpixel((i, j),255)
+				img.putpixel((i, j),0)
 
 """Generate a picture with a combination of previous cases"""
 if arg == "both":
