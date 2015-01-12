@@ -80,13 +80,28 @@ mumoy = np.sum(mu)/(nlin*ncol)    				# Pixels average value
 
 
 ##### Target density calculation #####
-
+"""
 fig = plt.figure()
 plt.imshow(mu, interpolation='nearest', vmin=0, vmax=255, cmap=plt.get_cmap('gray'))
 plt.show()
-
+"""
 dens = ma.Density_2.from_image(mu,[0,width,0,height]) 			# Density_2 object, contains triangulation points and their density.
 
+##### Source diracs #####
+N = 100
+Nlin = int(N * height)
+Ncol = int(N * width)
+Ny = Nlin * Ncol
 
+
+width = 1.0
+Ny = 100
+triangle = np.array([[0.,0.],[width,0.],[width/2.0,width*np.sin(sp.pi/3.0)]])
+Y = ma.Density_2(triangle).optimized_sampling(Ny-3)
+
+fig = plt.figure()
+ax = Axes3D(fig)
+ax.scatter(Y[:,0], Y[:,1], 1.0)
+plt.show()
 
 

@@ -94,7 +94,7 @@ plt.show()
 dens = ma.Density_2.from_image(mu,[0,w,0,h]) 			# Density_2 object, contains triangulation points and their density.
 
 ##### Source diracs #####
-N = 100
+N = 128
 Nlin = int(N * h)
 Ncol = int(N * w)
 Ny = Nlin * Ncol
