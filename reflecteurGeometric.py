@@ -23,7 +23,6 @@ import scipy.optimize as opt
 import scipy.sparse as sparse
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-from pyhull.convex_hull import ConvexHull
 import time
 
 debut = time.clock()
@@ -45,6 +44,7 @@ target = sys.argv[2]
 if target == "square":
 	ltarget = 1.0
 	square = np.array([[0.,0.],[ltarget,0.],[0.,ltarget],[ltarget,ltarget]])
+	mumoy = 1.0
 	dens = ma.Density_2(square)
 
 if target == "triangle":
@@ -56,7 +56,7 @@ if target == "triangle":
 if source == "triangle":
 	print "la source est un triangle"
 	Lsource = 1.0
-	Ndirac = 1000
+	Ndirac = 100
 	triangle = np.array([[0.,0.],[Lsource,0.],[Lsource/2.0,Lsource*np.sin(sp.pi/3.0)]])
 	Y = ma.Density_2(triangle).optimized_sampling(Ndirac-3)
 	Y = np.concatenate((Y, triangle))
@@ -65,23 +65,24 @@ if source == "triangle":
 if source == "square":
 	print "la source est un carre"
 	Lsource = 1.0
-	Ndirac = 1000
-	square = np.array([[1.,0.],[Lsource+1.,0.],[1.,Lsource],[Lsource+1.,Lsource]])
+	N = 100
+	Ndirac = N*N
+	square = np.array([[0.,0.],[Lsource,0.],[0.,Lsource],[Lsource,Lsource]])
 	Y = ma.Density_2(square).optimized_sampling(Ndirac-4)
 	Y = np.concatenate((Y, square))
 	nu = (dens.mass()/Ndirac) * np.ones(Ndirac)
-	"""
+	
 	fig = plt.figure()
 	ax = Axes3D(fig)
 	ax.scatter(Y[:,0], Y[:,1], 1.0)
 	plt.show()
-	"""
+	
 
 ##### Presolution #####
 """
 Similitude qui envoie la cible dans la source
 et calcule un premiere iteration psi
-A tester, envoyer le barycentre de la source sur celui de la cible puis 
+A tester: envoyer le barycentre de la source sur celui de la cible puis 
 retrecir la source jusqu'a ce que son enveloppe convexe soit incluse
 dans celle de la cible.
 """
@@ -99,8 +100,8 @@ interpol = ipol.CloughTocher2DInterpolator(Y, psi_tilde, tol=1e-6)
 
 
 ##### Gradient calculation #####
-nmesh = 10
-[x,y] = np.meshgrid(np.linspace(1.,Lsource+1.,nmesh),
+nmesh = 10*N
+[x,y] = np.meshgrid(np.linspace(0.,Lsource,nmesh),
                             np.linspace(0.,Lsource,nmesh))
 
 Nx = nmesh*nmesh
@@ -118,6 +119,9 @@ gx = np.reshape(gx, (nmesh*nmesh))			# Remise sous forme de vecteur pour chaque 
 gy = np.reshape(gy, (nmesh*nmesh))
 
 threshold = np.ones(Nx)
+J = np.logical_and(np.less(gx, threshold), np.less(gy, threshold))
+gx = gx[J]
+gy = gy[J]
 J = np.logical_and(np.greater(gx, np.zeros(gx.size)), np.greater(gy, np.zeros(gy.size)))
 gx = gx[J]
 gy = gy[J]
@@ -127,6 +131,25 @@ gy = gy[J]
 print gx, gy
 print np.max(gx)
 print np.max(gy)
+
+##### Pseudo ray tracing #####
+npix = N						# Number of columns of pixels
+ix = np.floor(npix*gx).astype(int) 		# Coordonnees x des pixels ou vont tomber les photons de coord gx
+iy = np.floor(npix*gy).astype(int)		# Coordonnees y	""
+
+data = np.ones(ix.size)
+#print np.shape(ix), np.shape(iy), np.shape(data)
+
+M = sparse.coo_matrix((data, (iy,ix)),shape=(npix, npix)).todense()
+
+Mmoy = np.sum(M)/(npix*npix)
+M = M/Mmoy*mumoy								# Egalisation de la valeur moyenne des pixels
+
+print "Execution time (seconds):", time.clock() - debut;
+
+plt.imshow(M, interpolation='nearest', vmin=0, vmax=1, cmap=plt.get_cmap('gray'))
+#plt.scatter(gx, gy)
+plt.show()
 
 sys.exit()
 
