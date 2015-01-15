@@ -14,6 +14,7 @@
 import sys
 sys.path.append('../Pybuild/')
 sys.path.append('../Pybuild/lib')
+sys.path.append('./Functions')
 import os
 import MongeAmpere as ma
 import numpy as np
@@ -24,6 +25,7 @@ import scipy.sparse as sparse
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import time
+from geometry import *
 
 debut = time.clock()
 
@@ -94,7 +96,7 @@ plt.show()
 dens = ma.Density_2.from_image(mu,[0,w,0,h]) 			# Density_2 object, contains triangulation points and their density.
 
 ##### Source diracs #####
-N = 128
+N = 100
 Nlin = int(N * h)
 Ncol = int(N * w)
 Ny = Nlin * Ncol
