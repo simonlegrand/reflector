@@ -10,15 +10,15 @@ import matplotlib.pyplot as plt
 ##### Regular polygon #####
 if sys.argv[1] == "polygon":
 	r = 1.0					# Radius of the polygon circumscribed circle 
-	Nx = 8					# Number of vertices
-	c = [3.0, 2.0]			# Center
+	Nx = 50					# Number of vertices
+	c = [0.0, 0.0]			# Center
 	t = np.linspace(0,2*np.pi, Nx+1);
 	t = t[0:Nx]
 	shape = r * np.vstack([c[0]+np.cos(t), c[1]+np.sin(t)]).T;
 
 if sys.argv[1] == "rectangle":
 	Nx = 4
-	w = 1.0
+	w = 0.5
 	h = 1.0
 	xmin = 3.0
 	ymin = 2.0

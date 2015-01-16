@@ -1,4 +1,3 @@
-import sys
 from geometry2D import *
 import numpy as np
 import MongeAmpere as ma
@@ -9,7 +8,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from pyhull.convex_hull import ConvexHull
 
 def presolution(sourcePts, sourceW, targetPts, targetW):
-	"""This function alculates psi0, a first estimation of psi."""
+	"""This function calculates psi0, a first estimation of psi."""
 	barySource = barycentre(sourcePts, sourceW)
 	baryTarget = barycentre(targetPts, targetW)
 
@@ -56,75 +55,3 @@ def presolution(sourcePts, sourceW, targetPts, targetW):
 	fig.gca().add_artist(grad)
 	plt.show()"""
 	return psi0
-	
-"""ltarget = 1.0
-xmin = 3.0
-ymin = 2.0
-X = np.array([[xmin,ymin],[xmin+ltarget,ymin],[xmin,ymin+ltarget],[xmin+ltarget,ymin+ltarget]])
-mu = np.array([1., 1., 1., 1.])
-mumoy = np.sum(mu)/len(mu)
-dens = ma.Density_2(X, mu)
-Nx = 30;
-t = np.linspace(0,2*np.pi,Nx+1);
-t = t[0:Nx]
-disk = np.vstack([np.cos(t),np.sin(t)]).T;
-X = ma.Density_2(disk).optimized_sampling(1000,verbose=True);
-mu = np.ones(1000)
-dens = ma.Density_2(X,mu);
-
-Lsource = 2.0
-N = 100
-Ndirac = N*N
-squareSource = np.array([[0.,0.],[Lsource,0.],[0.,Lsource],[Lsource,Lsource]])
-weightsSource = np.array([1., 1., 1., 1.])
-Y = ma.Density_2(squareSource).optimized_sampling(Ndirac-4)
-Y = np.concatenate((Y, squareSource))
-nu = (dens.mass()/Ndirac) * np.ones(Ndirac)
-
-psi = ma.optimal_transport_2(dens, Y, nu, presolution(Y, nu, X, mu), verbose=True)
-#psi_tilde0 = presolution(Y, nu, squareTarget, weightsTarget)
-psi_tilde = (Y[:,1]*Y[:,1] + Y[:,0]*Y[:,0] - psi)/2
-interpol = ipol.CloughTocher2DInterpolator(Y, psi_tilde, tol=1e-6)
-
-
-##### Gradient calculation #####
-nmesh = 10*N
-[x,y] = np.meshgrid(np.linspace(0., Lsource, nmesh),
-                            np.linspace(0., Lsource, nmesh))
-
-Nx = nmesh*nmesh
-
-x = np.reshape(x,(Nx))
-y = np.reshape(y,(Nx))
-X = np.vstack([x,y]).T								# Cree une matrice (Nx,2) de coordonnees des noeuds de la grille
-source = plt.scatter(X[:,0], X[:,1]  , color='g')
-I=np.reshape(interpol(X),(nmesh,nmesh))
-[gy, gx] = np.gradient(I, Lsource/nmesh, Lsource/nmesh)
-
-gx = np.reshape(gx, (nmesh*nmesh))			# Remise sous forme de vecteur pour chaque coordonnee du gradient
-gy = np.reshape(gy, (nmesh*nmesh))
-
-threshold = np.ones(Nx)
-I = np.logical_or(np.logical_or(np.greater(gx, threshold*(xmin+ltarget)), np.greater(gy, threshold*(ymin+ltarget))), np.logical_or(np.less(gx, threshold*xmin), np.less(gy, threshold*ymin)))
-print I
-X = X[I]
-J = np.logical_and(np.less(gx, threshold*(xmin+ltarget)), np.less(gy, threshold*(ymin+ltarget)))
-gx = gx[J]
-gy = gy[J]
-J = np.logical_and(np.greater(gx, np.ones(gx.size)*xmin), np.greater(gy, np.ones(gy.size)*ymin))
-gx = gx[J]
-gy = gy[J]
-J = np.logical_and(np.isfinite(gx) ,np.isfinite(gy))
-gx = gx[J]
-gy = gy[J]
-
-out = plt.scatter(X[:,0], X[:,1]  , color='b')
-grad = plt.scatter(gx, gy, color='r')
-fig = plt.gcf()
-ax = plt.gca()
-ax.cla() # clear things for fresh plot
-fig.gca().add_artist(source)
-fig.gca().add_artist(grad)
-fig.gca().add_artist(out)
-plt.show()
-"""
