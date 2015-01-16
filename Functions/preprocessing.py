@@ -87,11 +87,11 @@ def readImage(fn):
 		x = np.zeros((nlin, ncol),float)
 		y = np.zeros((nlin, ncol),float)
 		xmin = 2.5
-		ymin = 2.0
+		ymax = 3.0
 		for i in range(0, nlin):
 			for j in range(0, ncol):
 				x[i][j] = xmin + j/float(n)
-				y[i][j] = ymin + i/float(n)
+				y[i][j] = ymax - i/float(n)
 		
 		x = np.reshape(x,(nlin*ncol))
 		y = np.reshape(y,(nlin*ncol))

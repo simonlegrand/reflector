@@ -37,12 +37,10 @@ if len(sys.argv) != 3:
 
 ##### Target processing #####
 [X, mu] = inputPreproc(sys.argv[2])
-print np.shape(X), np.shape(mu)
-dens = ma.Density_2(X,mu);
+dens = ma.Density_2(X,mu)
 
 ##### Source processing #####
 [Y, nu] = inputPreproc(sys.argv[1])
-#Y = np.concatenate((Y, source))
 nu = (dens.mass()/np.shape(Y)[0]) * np.ones(np.shape(Y)[0])
 
 ##### Optimal Transport problem resolution #####
