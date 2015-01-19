@@ -1,7 +1,7 @@
 """Contains functions used during the preprocessing step"""
 import sys
-sys.path.append('../Pybuild/')
-sys.path.append('../Pybuild/lib')
+sys.path.append('../PyMongeAmpere-build/')
+sys.path.append('../PyMongeAmpere-build/lib')
 import os.path
 import numpy as np
 import MongeAmpere as ma
@@ -81,7 +81,7 @@ def readImage(fn):
 		n = 128 
 		nlin = int(n * height)
 		ncol = int(n * width)
-		w = sp.misc.imresize(img, (nlin,ncol))		# Image resizing while keeping proportions
+		w = sp.misc.imresize(img, (nlin,ncol))/255.0		# Image resizing while keeping proportions
 		w = w.astype(float)
 		
 		x = np.zeros((nlin, ncol),float)

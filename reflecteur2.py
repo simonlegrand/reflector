@@ -12,8 +12,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-sys.path.append('../Pybuild/')
-sys.path.append('../Pybuild/lib')
+sys.path.append('../PyMongeAmpere-build/')
+sys.path.append('../PyMongeAmpere-build/lib')
 sys.path.append('./Functions')
 import os
 import MongeAmpere as ma

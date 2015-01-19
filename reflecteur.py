@@ -1,3 +1,4 @@
+#TODO: Probleme d'egalisation des masses
 # Reflecteur
 # Copyright (C) 2014 Quentin Merigot, CNRS
 # This program is free software: you can redistribute it and/or modify
@@ -12,8 +13,8 @@
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
 import sys
-sys.path.append('../Pybuild/')
-sys.path.append('../Pybuild/lib')
+sys.path.append('../PyMongeAmpere-build/')
+sys.path.append('../PyMongeAmpere-build/lib')
 sys.path.append('./Functions')
 import os
 from presolution import *
@@ -37,11 +38,15 @@ if len(sys.argv) != 3:
 
 ##### Target processing #####
 [X, mu] = inputPreproc(sys.argv[2])
+print mu
 dens = ma.Density_2(X,mu)
 
 ##### Source processing #####
 [Y, nu] = inputPreproc(sys.argv[1])
-nu = (dens.mass()/np.shape(Y)[0]) * np.ones(np.shape(Y)[0])
+#nu = (dens.mass()/np.shape(Y)[0]) * np.ones(np.shape(Y)[0])
+#nuMoy = np.sum(nu) / np.shape(Y)[0]
+
+print dens.mass(), nuMoy
 
 ##### Optimal Transport problem resolution #####
 psi = ma.optimal_transport_2(dens, Y, nu, presolution(Y, nu, X, mu), verbose=True)
