@@ -42,10 +42,11 @@ def readData(fn):
 				x.append(float(data[0]))
 				y.append(float(data[1]))
 					
-			N = 5000
+			
 			X = np.array([x,y]).T
+			N = 5000
 			X = ma.Density_2(X).optimized_sampling(N)
-			w = np.ones(N)
+			w = np.ones(N, dtype=float)/N
 			return [X, w]
 			
 	except IOError:
@@ -80,14 +81,15 @@ def readImage(fn):
 
 		n = 128 
 		nlin = int(n * height)
-		ncol = int(n * width)
-		w = sp.misc.imresize(img, (nlin,ncol))/255.0		# Image resizing while keeping proportions
-		w = w.astype(float)
+		ncol = int(n * width)							
+		w = sp.misc.imresize(img, (nlin,ncol))		# Image resizing while keeping proportions
+		w[w<10.0] = 10.0							# Threshold to avoid empty Laguerre cells
+		w = w/255.0
 		
 		x = np.zeros((nlin, ncol),float)
 		y = np.zeros((nlin, ncol),float)
-		xmin = 2.5
-		ymax = 3.0
+		xmin = 1.5
+		ymax = 2.0
 		for i in range(0, nlin):
 			for j in range(0, ncol):
 				x[i][j] = xmin + j/float(n)
@@ -96,7 +98,7 @@ def readImage(fn):
 		x = np.reshape(x,(nlin*ncol))
 		y = np.reshape(y,(nlin*ncol))
 		X = np.vstack([x,y]).T
-		w = np.reshape(w,(nlin*ncol))
+		w = np.reshape(w,(nlin*ncol))			
 		return [X, w]		 	
 		
 	except IOError:

@@ -1,4 +1,3 @@
-#TODO: Probleme d'egalisation des masses
 # Reflecteur
 # Copyright (C) 2014 Quentin Merigot, CNRS
 # This program is free software: you can redistribute it and/or modify
@@ -22,9 +21,6 @@ from preprocessing import *
 import MongeAmpere as ma
 import numpy as np
 import scipy as sp
-import scipy.interpolate as ipol
-import scipy.optimize as opt
-import scipy.sparse as sparse
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
 from mpl_toolkits.mplot3d import Axes3D
@@ -38,15 +34,15 @@ if len(sys.argv) != 3:
 
 ##### Target processing #####
 [X, mu] = inputPreproc(sys.argv[2])
-print mu
+print "target =", sys.argv[2]
 dens = ma.Density_2(X,mu)
 
 ##### Source processing #####
 [Y, nu] = inputPreproc(sys.argv[1])
-#nu = (dens.mass()/np.shape(Y)[0]) * np.ones(np.shape(Y)[0])
-#nuMoy = np.sum(nu) / np.shape(Y)[0]
-
-print dens.mass(), nuMoy
+print "source =", sys.argv[1]
+nu = (dens.mass()/np.sum(nu)) * nu
+tol = 1e-10
+assert(np.sum(nu) - dens.mass() < tol), "Different mass in source and in target"
 
 ##### Optimal Transport problem resolution #####
 psi = ma.optimal_transport_2(dens, Y, nu, presolution(Y, nu, X, mu), verbose=True)
@@ -61,7 +57,10 @@ interpol = tri.CubicTriInterpolator(T, psi_tilde)
 Z = Y[J]
 out = plt.scatter(Z[:,0], Z[:,1]  , color='b', s=0.2)"""
 
-s = plt.scatter(Y[:,0], Y[:,1]  , color='g', s=0.2)
+print "Execution time:", time.clock() - debut
+
+z = np.max(nu) - nu/np.max(nu)
+s = plt.scatter(Y[:,0], Y[:,1], c=z, lw=0, cmap=plt.cm.gray, vmin=0.0, vmax=1.0)
 t = plt.scatter(gx, gy, color='r', s=0.2)
 fig = plt.gcf()
 ax = plt.gca()

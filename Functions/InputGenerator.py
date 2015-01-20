@@ -18,10 +18,10 @@ if sys.argv[1] == "polygon":
 
 if sys.argv[1] == "rectangle":
 	Nx = 4
-	w = 0.5
-	h = 1.0
-	xmin = 3.0
-	ymin = 2.0
+	w = 2.
+	h = 1.
+	xmin = 0.0
+	ymin = 1.0
 	shape = np.array([[xmin,ymin],[xmin+w,ymin],[xmin,ymin+h],[xmin+w,ymin+h]])
 ##### Writing in the file #####
 myFile = file('input.txt','w')
