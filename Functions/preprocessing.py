@@ -13,14 +13,13 @@ def rgbtogray(imcolor):
 	imgray = 0.299*imcolor[:,:,0] + 0.587*imcolor[:,:,1] + 0.114*imcolor[:,:,2]
 	return imgray
 	
-def inputPreproc(fileName):
+def inputPreproc(fileName, xmin=0., ymin=0.):
 	extension = os.path.splitext(fileName)[1]
 	if extension == ".txt":
 		return readData(fileName)
 
 	else:
-		return readImage(fileName)
-
+		return readImage(fileName, xmin, ymin)
 
 def readData(fn):
 	"""This function returns x and y points coordinates and
@@ -36,18 +35,17 @@ def readData(fn):
 		else:
 			x = []
 			y = []
-			w = []
 			for line in f:
 				data = line.rstrip('\n\r').split("\t")
 				x.append(float(data[0]))
 				y.append(float(data[1]))
 					
-			
 			X = np.array([x,y]).T
-			N = 5000
-			X = ma.Density_2(X).optimized_sampling(N)
-			w = np.ones(N, dtype=float)/N
-			return [X, w]
+			dens = ma.Density_2(X)
+			return dens
+			"""X = ma.Density_2(X).optimized_sampling(N)
+			w = np.ones(N, dtype=float)
+			return [X, w]"""
 			
 	except IOError:
 		print "Error: can\'t find file or read data"		
@@ -57,7 +55,7 @@ def readData(fn):
 		f.close()
 		
 		
-def readImage(fn):
+def readImage(fn, xmin, ymin):
 	"""This function returns points, 
 	determined from either a rgb or grayscaled picture"""
 	try:
@@ -81,30 +79,23 @@ def readImage(fn):
 
 		n = 128 
 		nlin = int(n * height)
-		ncol = int(n * width)							
-		w = sp.misc.imresize(img, (nlin,ncol))		# Image resizing while keeping proportions
-		w[w<10.0] = 10.0							# Threshold to avoid empty Laguerre cells
-		w = w/255.0
+		ncol = int(n * width)	
+		N = nlin * ncol				
+		img = sp.misc.imresize(img, (nlin,ncol))		# Image resizing while keeping proportions
+		img = np.asarray(img, dtype=float)
+		img[img<10.0] = 10.0							# Threshold to avoid empty Laguerre cells on black areas
+		img = img/255.0
 		
-		x = np.zeros((nlin, ncol),float)
-		y = np.zeros((nlin, ncol),float)
-		xmin = 1.5
-		ymax = 2.0
-		for i in range(0, nlin):
-			for j in range(0, ncol):
-				x[i][j] = xmin + j/float(n)
-				y[i][j] = ymax - i/float(n)
-		
-		x = np.reshape(x,(nlin*ncol))
-		y = np.reshape(y,(nlin*ncol))
-		X = np.vstack([x,y]).T
-		w = np.reshape(w,(nlin*ncol))			
-		return [X, w]		 	
+		xmax = xmin + width
+		ymax = ymin + height
+		box = [xmin, xmax, ymax, ymin]
+		dens = ma.Density_2.from_image(img, box)
+		return dens
+		"""X = dens.optimized_sampling(N)
+		w = np.ones(N)			
+		return [X, w]"""		 	
 		
 	except IOError:
 		print "Error: can\'t find file or read data"
 	except ValueError:
 		print "Error: wrong data type in the file"
-
-#[X, w] = inputPreproc(sys.argv[1])
-#print X
