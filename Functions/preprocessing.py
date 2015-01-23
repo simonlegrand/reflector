@@ -49,9 +49,9 @@ def readData(fn):
 			return [X, w]"""
 			
 	except IOError:
-		print "Error: can\'t find file or read data"		
+		print ("Error: can\'t find file or read data")
 	except ValueError:
-		print "Error: wrong data type in the file"
+		print ("Error: wrong data type in the file")
 	finally:
 		f.close()
 		
@@ -97,6 +97,6 @@ def readImage(fn, xmin, ymin):
 		return [X, w]"""		 	
 		
 	except IOError:
-		print "Error: can\'t find file or read data"
+		print ("Error: can\'t find file or read data")
 	except ValueError:
-		print "Error: wrong data type in the file"
+		print ("Error: wrong data type in the file")

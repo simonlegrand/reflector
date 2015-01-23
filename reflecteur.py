@@ -52,7 +52,7 @@ assert(np.sum(nu) - mu.mass() < tol), "Different mass in source and in target"
 
 ##### Optimal Transport problem resolution #####
 psi0 = presolution(Y, nu, X, Wx)
-psi = ma.optimal_transport_2(dens, Y, nu, psi0, verbose=True)
+psi = ma.optimal_transport_2(mu, Y, nu, psi0, verbose=True)
 psi_tilde = (Y[:,1]*Y[:,1] + Y[:,0]*Y[:,0] - psi)/2
 
 ##### Output processing #####
