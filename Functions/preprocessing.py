@@ -1,4 +1,5 @@
 """Contains functions used during the preprocessing step"""
+from __future__ import print_function
 import sys
 sys.path.append('../PyMongeAmpere-build/')
 sys.path.append('../PyMongeAmpere-build/lib')

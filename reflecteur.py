@@ -11,6 +11,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program. If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import print_function
 import sys
 sys.path.append('../PyMongeAmpere-build/')
 sys.path.append('../PyMongeAmpere-build/lib')
@@ -29,17 +30,17 @@ import time
 debut = time.clock()
 
 if len(sys.argv) != 3:
-	print "**** Error : add source files ****";
+	print ("**** Error : add source files ****");
 	exit();
 
 ##### Target processing #####
 [X, mu] = inputPreproc(sys.argv[2])
-print "target =", sys.argv[2]
+print("target =", sys.argv[2])
 dens = ma.Density_2(X,mu)
 
 ##### Source processing #####
 [Y, nu] = inputPreproc(sys.argv[1])
-print "source =", sys.argv[1]
+print ("source =", sys.argv[1])
 nu = (dens.mass()/np.sum(nu)) * nu
 tol = 1e-10
 assert(np.sum(nu) - dens.mass() < tol), "Different mass in source and in target"
@@ -57,7 +58,7 @@ interpol = tri.CubicTriInterpolator(T, psi_tilde)
 Z = Y[J]
 out = plt.scatter(Z[:,0], Z[:,1]  , color='b', s=0.2)"""
 
-print "Execution time:", time.clock() - debut
+print ("Execution time:", time.clock() - debut)
 
 z = np.max(nu) - nu/np.max(nu)
 s = plt.scatter(Y[:,0], Y[:,1], c=z, lw=0, cmap=plt.cm.gray, vmin=0.0, vmax=1.0)

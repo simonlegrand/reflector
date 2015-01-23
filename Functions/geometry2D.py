@@ -1,11 +1,12 @@
 """Module containing 2d geometric functions"""
+from __future__ import print_function
 import sys
 import numpy as np
 	
 def dotProduct(a, b):
 	"""Compute the dot product of a and b"""
 	if np.shape(a) != np.shape(b):
-		print "dotProdut error: Arrays with different shapes"
+		print ("dotProdut error: Arrays with different shapes")
 		sys.exit()
 		
 	if len(np.shape(a)) == 1:
@@ -18,17 +19,17 @@ def dotProduct(a, b):
 if __name__ == "__main__":
 	u = np.array([[1.,0.],[0.,1.],[1.,0.],[2.,1.]])
 	v = np.array([[2.,0.],[1.,1.],[1.,1.],[2.,1.]])
-	print "u = ", u
-	print "v = ", v
-	print "u.v = ", dotProduct(u,v)
+	print ("u = ", u)
+	print ("v = ", v)
+	print ("u.v = ", dotProduct(u,v))
 	u = np.array([1.,0.])
 	v = np.array([2.,0.])
-	print "u.v = ", dotProduct(u,v)
+	print ("u.v = ", dotProduct(u,v))
 	
 def dist(a, b):
 	"""Compute the distance between points a and b"""
 	if np.shape(a) != np.shape(b):
-		print "dist error: Arrays with different shapes"
+		print ("dist error: Arrays with different shapes")
 		sys.exit()
 	
 	if len(np.shape(a)) == 1:
@@ -41,20 +42,20 @@ def dist(a, b):
 if __name__ == "__main__":
 	u = np.array([[1.,0.],[0.,1.],[1.,0.],[2.,1.]])
 	v = np.array([[2.,0.],[1.,1.],[1.,1.],[2.,1.]])
-	print "dist(u,v) = ", dist(u,v)
+	print ("dist(u,v) = ", dist(u,v))
 	u = np.array([0.,0.])
 	v = np.array([1.,1.])
-	print "dist(u,v) = ", dist(u,v)
+	print ("dist(u,v) = ", dist(u,v))
 	
 def barycentre(pts, w):
 	"""Compute the barycentre of the points cloud pts
 	affected with w weights"""
 	if len(np.shape(pts)) == 1 and len(w) == 1:
-		print "barycentre warning: Only one point"
+		print ("barycentre warning: Only one point")
 		return pts
 
 	elif len(pts) != len(w):
-		print "barycentre error: Arrays have not the same length"
+		print ("barycentre error: Arrays have not the same length")
 		sys.exit()
 		
 	else:
@@ -66,10 +67,10 @@ def barycentre(pts, w):
 if __name__ == "__main__":
 	points = np.array([[0.,0.],[0.,1.],[1.,0.],[1.,1.]])
 	weights = np.array([1., 2., 1., 2.])
-	print "barycentre = ", barycentre(points, weights)
+	print ("barycentre = ", barycentre(points, weights))
 	points = np.array([0.,0.])
 	weights = np.array([1.])
-	print "barycentre = ", barycentre(points, weights)
+	print ("barycentre = ", barycentre(points, weights))
 
 def distPtLine(m, n, pt):
 	"""
@@ -82,11 +83,11 @@ def distPtLine(m, n, pt):
 	pt = np.array(pt)
 	
 	if np.allclose(m, n):
-		print "distPtLine error: Impossible to generate a line from two identical points"
+		print ("distPtLine error: Impossible to generate a line from two identical points")
 		sys.exit()
 		
 	elif len(np.shape(pt)) != 1:
-		print "distPtLine error: pt must a 1D array"
+		print ("distPtLine error: pt must a 1D array")
 		sys.exit()
 	
 	a = -(n[1] - m[1])
@@ -108,7 +109,7 @@ def furthestPt(cloud, a):
 		a is a (, 2) array containing coord of pt
 	"""
 	if np.shape(cloud) == (1, 2):
-		print "furthestPt warning: Only one point to compare"
+		print ("furthestPt warning: Only one point to compare")
 		return cloud
 	
 	else:
