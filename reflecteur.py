@@ -33,26 +33,39 @@ if len(sys.argv) != 3:
 	print ("**** Error : add source files ****");
 	exit();
 
-##### Target processing #####
-[X, mu] = inputPreproc(sys.argv[2])
+print ("source =", sys.argv[1])
 print("target =", sys.argv[2])
-dens = ma.Density_2(X,mu)
+##### Target processing #####
+Nx = 10000
+mu = inputPreproc(sys.argv[2], 1.0, 1.0)
+X = mu.optimized_sampling(Nx)
+Wx = np.ones(Nx)
 
 ##### Source processing #####
-[Y, nu] = inputPreproc(sys.argv[1])
-print ("source =", sys.argv[1])
-nu = (dens.mass()/np.sum(nu)) * nu
+Ny = 10000
+densSource = inputPreproc(sys.argv[1])
+Y = densSource.optimized_sampling(Ny)
+nu = np.ones(Ny)
+nu = (mu.mass()/np.sum(nu)) * nu
 tol = 1e-10
-assert(np.sum(nu) - dens.mass() < tol), "Different mass in source and in target"
+assert(np.sum(nu) - mu.mass() < tol), "Different mass in source and in target"
 
 ##### Optimal Transport problem resolution #####
-psi = ma.optimal_transport_2(dens, Y, nu, presolution(Y, nu, X, mu), verbose=True)
+psi0 = presolution(Y, nu, X, Wx)
+psi = ma.optimal_transport_2(dens, Y, nu, psi0, verbose=True)
 psi_tilde = (Y[:,1]*Y[:,1] + Y[:,0]*Y[:,0] - psi)/2
 
 ##### Output processing #####
-T = tri.Triangulation(Y[:,0], Y[:,1])
-interpol = tri.CubicTriInterpolator(T, psi_tilde)
+T = ma.delaunay_2(Y, nu)
+T = tri.Triangulation(Y[:,0], Y[:,1], T)
+interpol = tri.CubicTriInterpolator(T, psi_tilde, kind='user', dz=(X[:,0], X[:,1]))
+[gridx, gridy] = np.meshgrid(np.linspace(np.min(Y[:,0]), np.max(Y[:,0]), 100), np.linspace(np.min(Y[:,1]), np.max(Y[:,1]), 100))
 [gx, gy] = interpol.gradient(Y[:,0], Y[:,1])
+
+fig = plt.figure()
+ax = Axes3D(fig)
+ax.scatter(gridx, gridy, interpol(gridx, gridy), marker=".", lw=0.1)
+plt.show()
 
 """J = np.logical_or(np.logical_or(np.greater(gy, np.max(X[:,0])), np.greater(gx, np.max(X[:,1]))), np.logical_or(np.less(gy, np.min(X[:,0])), np.less(gx, np.min(X[:,1]))))		#Affichage des points dont le gradient est en dehors de la cible pour une source CARRE!
 Z = Y[J]
@@ -61,8 +74,8 @@ out = plt.scatter(Z[:,0], Z[:,1]  , color='b', s=0.2)"""
 print ("Execution time:", time.clock() - debut)
 
 z = np.max(nu) - nu/np.max(nu)
-s = plt.scatter(Y[:,0], Y[:,1], c=z, lw=0, cmap=plt.cm.gray, vmin=0.0, vmax=1.0)
-t = plt.scatter(gx, gy, color='r', s=0.2)
+s = plt.scatter(Y[:,0], Y[:,1], c='b', marker=".", lw=0.1)
+t = plt.scatter(gx, gy, color='r', marker=".", lw=0.1)
 fig = plt.gcf()
 ax = plt.gca()
 ax.cla() # clear things for fresh plot
