@@ -8,7 +8,14 @@ from mpl_toolkits.mplot3d import Axes3D
 from pyhull.convex_hull import ConvexHull
 
 def presolution(sourcePts, sourceW, targetPts, targetW):
-	"""This function calculates psi0, a first estimation of psi."""
+	"""
+	This function calculates psi0, a first estimation of psi.
+	"""
+	sourcePts = np.asfarray(sourcePts)
+	sourceW = np.asfarray(sourceW)
+	targetPts = np.asfarray(targetPts)
+	targetW = np.asfarray(targetW)
+	
 	barySource = barycentre(sourcePts, sourceW)
 	baryTarget = barycentre(targetPts, targetW)
 
@@ -26,9 +33,10 @@ def presolution(sourcePts, sourceW, targetPts, targetW):
 	insCircleTargetR = dmin									#Target inscribed circle radius centered on baryTarget
 	
 	ratio = insCircleTargetR / (cirCircleSourceR)
-	translation = baryTarget - barySource
+	
 	gradx = ratio*(sourcePts[:,0]-barySource[0]) + baryTarget[0]	#Gradient must send source into target
 	grady = ratio*(sourcePts[:,1]-barySource[1]) + baryTarget[1]
+	
 	psi_tilde0 = 0.5*ratio*(np.power(sourcePts[:,0] - barySource[0], 2) + np.power(sourcePts[:,1] - barySource[1], 2)) + baryTarget[0]*(sourcePts[:,0]) + baryTarget[1]*(sourcePts[:,1])
 
 	"""fig = plt.figure()
