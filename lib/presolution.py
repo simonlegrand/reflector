@@ -1,4 +1,4 @@
-from geometry2D import *
+from geometry import *
 import numpy as np
 import MongeAmpere as ma
 import matplotlib.pyplot as plt

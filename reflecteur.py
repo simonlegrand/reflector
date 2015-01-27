@@ -15,7 +15,7 @@ from __future__ import print_function
 import sys
 sys.path.append('../PyMongeAmpere-build/')
 sys.path.append('../PyMongeAmpere-build/lib')
-sys.path.append('./Functions')
+sys.path.append('./lib')
 import os
 from presolution import *
 from preprocessing import *
@@ -35,17 +35,17 @@ if len(sys.argv) != 3:
 
 print ("source =", sys.argv[1])
 print("target =", sys.argv[2])
+
+N = 10000
 ##### Target processing #####
-Nx = 10000
 mu = inputPreproc(sys.argv[2], 1.0, 1.0)
-X = mu.optimized_sampling(Nx)
-Wx = np.ones(Nx)
+X = ma.optimized_sampling_2(mu, N)
+Wx = np.ones(N)
 
 ##### Source processing #####
-Ny = 10000
 densSource = inputPreproc(sys.argv[1])
-Y = densSource.optimized_sampling(Ny)
-nu = np.ones(Ny)
+Y = ma.optimized_sampling_2(densSource, N)
+nu = np.ones(N)
 nu = (mu.mass()/np.sum(nu)) * nu
 tol = 1e-10
 assert(np.sum(nu) - mu.mass() < tol), "Different mass in source and in target"
