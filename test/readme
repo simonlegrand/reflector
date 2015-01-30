@@ -1,0 +1,37 @@
+To run the tests:
+cd path/to/test/
+python -m unittest <fileName>  # Don't write extension to fileName
+
+More information about unittest at:
+https://docs.python.org/2/library/unittest.html
+http://openclassrooms.com/courses/apprenez-a-programmer-en-python/les-tests-unitaires-avec-unittest (french)
+
+Tests include exceptions raising, hence the printing of errors.
+No panic, it's normal! The most important is the OK at the end.
+
+
+##################### Test results #####################
+
+test_geometry
+-------------
+
+python -m unittest test_geometry
+
+****barycentre error:  Pts and w must have the same length.
+.****distance_point_line error:  m, n and pt must have the same dimension.
+****distance_point_line error:  m, n and pt must be points (1D array).
+****distance_point_line error: Impossible to generate a line from two identical points
+.****furthest_point error:  a must be a point
+****furthest_point error:  a and cloud must have the same number of colums.
+.****gradient_to_spherical error: division by zero.
+****gradient_to_spherical error:  gx and gy must be 1D arrays.
+****gradient_to_spherical error:  gx and gy must have the same length.
+.****planar_to_spherical error:  ksi and eta must have the same length.
+****planar_to_spherical error:  ksi and eta must be 1D arrays.
+.****spherical_to_gradient error:  theta and phi must be 1D arrays.
+****spherical_to_gradient error:  theta and phi must have the same length.
+.
+----------------------------------------------------------------------
+Ran 6 tests in 0.005s
+
+OK

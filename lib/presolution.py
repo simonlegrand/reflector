@@ -7,49 +7,66 @@ import scipy.sparse as sparse
 from mpl_toolkits.mplot3d import Axes3D
 from pyhull.convex_hull import ConvexHull
 
-def presolution(sourcePts, sourceW, targetPts, targetW):
+def presolution(source_pts, source_w, target_pts, target_w):
 	"""
 	This function calculates psi0, a first estimation of psi.
+	
+	Parameters
+	----------
+	source_pts : 2D array
+	source_w : 1D array
+		Weights associated to source_pts
+	target_pts : 2D array
+	target_w : 1D array
+		Weights asociated to target_pts
+		
+	Returns
+	-------
+	psi0 : 1D array
+		Convex estimation of the potential. Its gradient
+		send source_pts convex hull into target_pts
+		convex hull.	
 	"""
-	sourcePts = np.asfarray(sourcePts)
-	sourceW = np.asfarray(sourceW)
-	targetPts = np.asfarray(targetPts)
-	targetW = np.asfarray(targetW)
+	source_pts = np.asarray(source_pts, dtype=np.float64)
+	source_w = np.asarray(source_w, dtype=np.float64)
+	target_pts = np.asarray(target_pts, dtype=np.float64)
+	target_w = np.asarray(target_w, dtype=np.float64)
 	
-	barySource = barycentre(sourcePts, sourceW)
-	baryTarget = barycentre(targetPts, targetW)
+	bary_source = barycentre(source_pts, source_w)
+	bary_target = barycentre(target_pts, target_w)
+	
+	# Source circum circle radius centered on bary_source
+	r_source = furthest_point(source_pts, bary_source)
 
-	cirCircleSourceR = furthestPt(sourcePts, barySource)	# Source circum circle radius centered on barySource
+	target_hull = ConvexHull(target_pts)
+	p = target_hull.points
+	v = target_hull.vertices
 	
-	targetHull = ConvexHull(targetPts)
-	p = targetHull.points
-	v = targetHull.vertices
-	
-	dmin = distPtLine(p[v[0][0]], p[v[0][1]], baryTarget)
+	dmin = distance_point_line(p[v[0][0]], p[v[0][1]], bary_target)
 	for i in range(1, len(v)):
-		if distPtLine(p[v[i][0]], p[v[i][1]], baryTarget) < dmin:
-			dmin = distPtLine(p[v[i][0]], p[v[i][1]], baryTarget)
-			
-	insCircleTargetR = dmin									#Target inscribed circle radius centered on baryTarget
+		if distance_point_line(p[v[i][0]], p[v[i][1]], bary_target) < dmin:
+			dmin = distance_point_line(p[v[i][0]], p[v[i][1]], bary_target)
 	
-	ratio = insCircleTargetR / (cirCircleSourceR)
+	# Target inscribed circle radius centered on bary_target		
+	r_target = dmin
 	
-	gradx = ratio*(sourcePts[:,0]-barySource[0]) + baryTarget[0]	#Gradient must send source into target
-	grady = ratio*(sourcePts[:,1]-barySource[1]) + baryTarget[1]
+	ratio = r_target / r_source
 	
-	psi_tilde0 = 0.5*ratio*(np.power(sourcePts[:,0] - barySource[0], 2) + np.power(sourcePts[:,1] - barySource[1], 2)) + baryTarget[0]*(sourcePts[:,0]) + baryTarget[1]*(sourcePts[:,1])
+	psi_tilde0 = 0.5*ratio*(np.power(source_pts[:,0] - bary_source[0], 2) + np.power(source_pts[:,1] - bary_source[1], 2)) + bary_target[0]*(source_pts[:,0]) + bary_target[1]*(source_pts[:,1])
 
+	psi0 = np.power(source_pts[:,0], 2) + np.power(source_pts[:,1], 2) - 2*psi_tilde0
 	"""fig = plt.figure()
 	ax = Axes3D(fig)
-	ax.scatter(sourcePts[:,0], sourcePts[:,1], psi_tilde0)
+	ax.scatter(source_pts[:,0], source_pts[:,1], psi_tilde0)
 	plt.show()"""
-	psi0 = np.power(sourcePts[:,0], 2) + np.power(sourcePts[:,1], 2) - 2*psi_tilde0
 	
-	#Verifier que grad(psi_tilde0) est bien inclus dans targetPts
-	"""circle1 = plt.Circle(barySource,cirCircleSourceR, color='b', fill=False)
-	circle2 = plt.Circle(baryTarget,insCircleTargetR, color='r', fill=False)
-	points1 = plt.scatter(sourcePts[:,0], sourcePts[:,1], color='b')
-	points2 = plt.scatter(targetPts[:,0], targetPts[:,1], color='r')
+	#Verifier que grad(psi_tilde0) est bien inclus dans target_pts
+	"""gradx = ratio*(source_pts[:,0]-bary_source[0]) + bary_target[0]
+	grady = ratio*(source_pts[:,1]-bary_source[1]) + bary_target[1]
+	circle1 = plt.Circle(bary_source,r_source, color='b', fill=False)
+	circle2 = plt.Circle(bary_target,r_target, color='r', fill=False)
+	points1 = plt.scatter(source_pts[:,0], source_pts[:,1], color='b')
+	points2 = plt.scatter(target_pts[:,0], target_pts[:,1], color='r')
 	grad = plt.scatter(gradx, grady, color='g')
 	fig = plt.gcf()
 	ax = plt.gca()

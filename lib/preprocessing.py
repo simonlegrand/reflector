@@ -1,4 +1,4 @@
-"""Contains functions used during the preprocessing step"""
+"""Contains functions used during the input processing step."""
 from __future__ import print_function
 import sys
 sys.path.append('../PyMongeAmpere-build/')
@@ -9,23 +9,60 @@ import MongeAmpere as ma
 import matplotlib.pyplot as plt
 import scipy as sp
 
-def rgbtogray(imcolor):
-	"""Conversion of a rgb picture into a grayscaled picture"""
+def rgb_to_gray(imcolor):
+	"""
+	Conversion of a rgb picture into a grayscaled picture.
+	
+	Parameters
+	----------
+	imcolor : 3D array
+		Three layers of color RGB.
+		
+	Returns
+	-------
+	imgray : 2D array
+		Grayscaled picture
+	"""
 	imgray = 0.299*imcolor[:,:,0] + 0.587*imcolor[:,:,1] + 0.114*imcolor[:,:,2]
 	return imgray
 	
-def inputPreproc(fileName, xmin=0., ymin=0.):
+def input_preprocessing(fileName, size=0.):
+	"""
+	Leads to the proper treatment according to the
+	nature of the file.
+	
+	Parameters
+	----------
+	fn : string
+		File adress
+	size : float
+		Only for a picture
+		
+	Returns
+	-------
+	dens : Density_2 object
+	"""
 	extension = os.path.splitext(fileName)[1]
 	if extension == ".txt":
-		return readData(fileName)
+		return read_data(fileName)
 
 	else:
-		return readImage(fileName, xmin, ymin)
+		return read_image(fileName,size)
 
-def readData(fn):
-	"""This function returns x and y points coordinates and
-	their associated weights (= 1.0 if not provided),
-	from the file fn"""
+def read_data(fn):
+	"""
+	This function returns a Density_2 object,
+	determined from points in the file fn.
+	
+	Parameters
+	----------
+	fn : string
+		File adress
+		
+	Returns
+	-------
+	dens : Density_2 object
+	"""
 	try:
 		f = open(fn, "r")
 		header = f.readline().rstrip('\n\r')
@@ -40,13 +77,22 @@ def readData(fn):
 				data = line.rstrip('\n\r').split("\t")
 				x.append(float(data[0]))
 				y.append(float(data[1]))
-					
+				
+			x = np.asarray(x)
+			y = np.asarray(y)
+			
+			# Recentering of points around origin		
+			xmax = np.max(x)
+			xmin = np.min(x)
+			ymax = np.max(y)
+			ymin = np.min(y)
+			x = x - (xmax - xmin) / 2
+			y = y - (ymax - ymin) / 2
 			X = np.array([x,y]).T
+
+			# Eventually add weights in argument of Density_2
 			dens = ma.Density_2(X)
 			return dens
-			"""X = ma.Density_2(X).optimized_sampling(N)
-			w = np.ones(N, dtype=float)
-			return [X, w]"""
 			
 	except IOError:
 		print ("Error: can\'t find file or read data")
@@ -56,45 +102,53 @@ def readData(fn):
 		f.close()
 		
 		
-def readImage(fn, xmin, ymin):
-	"""This function returns points, 
-	determined from either a rgb or grayscaled picture"""
+def read_image(fn, size):
+	"""
+	This function returns a Density_2 object, 
+	determined from a picture.
+	If the picture is in rgb, it will be grayscaled.
+	
+	Parameters
+	----------
+	fn : string
+		Picture adress
+	size : float
+		Length of the largest dimension desired
+		
+	Returns
+	-------
+	dens : Density_2 object describing picture density
+	"""
 	try:
 		image = sp.misc.imread(fn)
 		dims = np.shape(image)
-		if len(dims) == 3:							# If the picture is in RGB
-			img = rgbtogray(image)					# Conversion to grayscale
+		if len(dims) == 3:
+			img = rgb_to_gray(image)
 
-		elif len(dims) !=2:
+		elif len(dims) != 2:
 			raise ValueError
-			
+		
 		else:
 			img = image
-
-		if dims[0] >= dims[1]:						# If the picture is higher than width
-			height = 1.0
-			width = round(float(dims[1])/float(dims[0]), 2)				
-		else:										# If the picture is widther than high
-			height = round(float(dims[0])/float(dims[1]), 2)
-			width = 1.0
-
-		n = 128 
-		nlin = int(n * height)
-		ncol = int(n * width)	
-		N = nlin * ncol				
-		img = sp.misc.imresize(img, (nlin,ncol))		# Image resizing while keeping proportions
-		img = np.asarray(img, dtype=float)
-		img[img<10.0] = 10.0							# Threshold to avoid empty Laguerre cells on black areas
-		img = img/255.0
 		
-		xmax = xmin + width
-		ymax = ymin + height
-		box = [xmin, xmax, ymax, ymin]
-		dens = ma.Density_2.from_image(img, box)
-		return dens
-		"""X = dens.optimized_sampling(N)
-		w = np.ones(N)			
-		return [X, w]"""		 	
+		ratio = dims[0] / dims[1]
+
+		n = 128
+		nlin = int(n * ratio)
+		ncol = int(n * ratio)	
+		
+		img = sp.misc.imresize(img, (nlin,ncol))
+		img = np.asarray(img, dtype=float)
+		# Threshold to avoid empty Laguerre cells on black areas
+		img[img<10.0] = 10.0
+		img = img / 255.0
+		
+		xmin = -(size * ratio) / 2.
+		ymin = -(size * ratio) / 2.
+
+		box = [xmin,-xmin,-ymin,ymin]
+		dens = ma.Density_2.from_image(img,box)
+		return dens		 	
 		
 	except IOError:
 		print ("Error: can\'t find file or read data")

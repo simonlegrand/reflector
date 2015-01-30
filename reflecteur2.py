@@ -39,12 +39,24 @@ if len(sys.argv) != 3:
 print ("source =", sys.argv[1])
 print("target =", sys.argv[2])
 
-N = 5000
+# Definition de la position du plan de projection de la cible
+theta_0 = np.pi/2
+#phi_0 = np.pi/4
+phi_0 = 0
+d = 5.
+
+# Echantillonnage de la cible dans le repere du plan cible
+N = 10000
 ##### Target processing #####
 t_size = 1.0
-mu = input_preprocessing(sys.argv[2], t_size)
-X = ma.optimized_sampling_2(mu, N)
+mu = input_preprocessing(sys.argv[2],t_size)
+X = ma.optimized_sampling_2(mu,N)
 Wx = np.ones(N)
+
+theta, phi = planar_to_spherical(X[:,0],X[:,1],theta_0,phi_0,d)
+gradx, grady = spherical_to_gradient(theta,phi)
+g = np.vstack([gradx,grady]).T
+
 
 ##### Source processing #####
 densite_source = input_preprocessing(sys.argv[1])
@@ -54,32 +66,15 @@ nu = (mu.mass() / np.sum(nu)) * nu
 tol = 1e-10
 assert(np.sum(nu) - mu.mass() < tol), "Different mass in source and in target"
 
-##### Optimal Transport problem resolution #####
-psi0 = presolution(Y, nu, X, Wx)
-psi = ma.optimal_transport_2(mu, Y, nu, psi0, verbose=True)
-psi_tilde = (Y[:,1] * Y[:,1] + Y[:,0] * Y[:,0] - psi) / 2
 
-##### Output processing #####
-T = ma.delaunay_2(Y,nu)
-T = tri.Triangulation(Y[:,0],Y[:,1],T)
-interpol = tri.CubicTriInterpolator(T, psi_tilde, kind='user', dz=(X[:,0],X[:,1]))
-[gridx, gridy] = np.meshgrid(np.linspace(np.min(Y[:,0]), np.max(Y[:,0]), 100), np.linspace(np.min(Y[:,1]), np.max(Y[:,1]), 100))
-[gx, gy] = interpol.gradient(Y[:,0], Y[:,1])
+plt.subplot(2,1,1)
+t = plt.scatter(grady,gradx, color='r', marker=".", lw=0.1)
+plt.subplot(2,1,2)
+t2 = plt.scatter(X[:,0],X[:,1], color='r', marker=".", lw=0.1)
 
-##### Plot reflector shape #####
-fig = plt.figure()
-ax = Axes3D(fig)
-ax.scatter(gridx, gridy, interpol(gridx, gridy), marker=".", lw=0.1)
 plt.show()
 
-print ("Execution time:", time.clock() - debut)
+psi0 = presolution(Y,nu,g,Wx)
+psi = ma.optimal_transport_2(mu,Y,nu,psi0,verbose=True)
 
-z = np.max(nu) - nu/np.max(nu)
-s = plt.scatter(Y[:,0], Y[:,1], c='b', marker=".", lw=0.1)
-t = plt.scatter(gx, gy, color='r', marker=".", lw=0.1)
-fig = plt.gcf()
-ax = plt.gca()
-ax.cla() # clear things for fresh plot
-fig.gca().add_artist(s)
-fig.gca().add_artist(t)
-plt.show()
+
