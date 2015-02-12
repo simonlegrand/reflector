@@ -1,4 +1,4 @@
-"""Module containing geometric functions:
+""" Module containing geometric functions:
 barycentre, distance from a point to a line
 and furthest point from a given point
 """
@@ -6,6 +6,8 @@ from __future__ import print_function
 import sys
 
 import numpy as np
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 # To raise an error instead of a RuntimeWarning
 # when there is a division by zero
@@ -218,6 +220,7 @@ def spherical_to_gradient(theta,phi):
 	"""
 	This function convert spherical coordinates of reflected rays
 	on the unit sphere S2 into gradient coordinates of the reflector.
+	These expression are given for an incident light on Oz axis.
 	
 	Parameters
 	----------
@@ -261,7 +264,7 @@ def spherical_to_gradient(theta,phi):
 	except NotProperShapeError, arg:
 		print("****spherical_to_gradient error: ", arg.msg)
 		
-def planar_to_spherical(eta,ksi,theta_0,phi_0,d):
+def planar_to_spherical_backup(eta,ksi,theta_0,phi_0,d):
 	"""
 	This function computes to conversion from planar coordinates
 	(eta, ksi) to spherical coordinates (theta, phi) on the unit sphere
@@ -308,11 +311,230 @@ def planar_to_spherical(eta,ksi,theta_0,phi_0,d):
 			
 		phi = phi_0 - np.arctan(eta/d)
 		theta = theta_0 - np.arctan(ksi*np.cos(phi_0-phi)/d)
+		r = d / (np.cos(theta_0-theta) * np.cos(phi_0-phi))
 		
-		return theta,phi
+		return r,theta,phi
 			
 	except FloatingPointError:
 		print("****planar_to_spherical error: division by zero.")
 		
 	except NotProperShapeError, arg:
 		print("****planar_to_spherical error: ", arg.msg)
+
+def planar_to_spherical(eta,ksi,theta_0,phi_0,d):
+	"""
+	This function computes to conversion from planar coordinates
+	(eta, ksi) to spherical coordinates (theta, phi) on the unit sphere
+	for the reflector problem.
+	
+	Parameters
+	----------
+	eta : 1D array
+		Forms an orthonormal basis with ksi and the 
+		normal vector of the plane directed to 
+		the center of unit sphere
+	ksi : 1D array
+		Coordinate along ksi axis parallel to z axis
+	theta_0 : real
+		Coordinate theta of the plane origin
+	phi_0 : real
+		Coordinate phi of the plane origin	
+	d : Distance from the plane origin to the center
+		of unit sphere
+		
+	Returns
+	-------
+	theta : 1D array
+		Inclination angles (with respect to the
+		positiv z axis). 0 <= theta <= pi
+	phi : 1D array
+		Azimuthal angles (projection of a direction
+		in z=0 plane with respect to the x axis).
+		-pi/2 <= phi <= pi/2
+		
+	See Also
+	--------
+	Inverse Methods for Illumination Optics, Corien Prins
+	"""
+	try:
+		eta = np.asarray(eta, dtype=np.float64)
+		ksi = np.asarray(ksi, dtype=np.float64)
+		
+		if len(ksi.shape) > 1 or len(eta.shape) > 1:
+			raise NotProperShapeError("ksi and eta must be 1D arrays.")
+		
+		if ksi.shape != eta.shape:
+			raise NotProperShapeError("ksi and eta must have the same length.")
+			
+		diag = np.sqrt(eta*eta + ksi*ksi)
+		r = np.sqrt(diag*diag + d*d)
+
+		r_eta = np.sqrt(d*d + eta*eta)
+
+		theta = np.arccos(d*np.cos(theta_0)/r_eta) - np.arcsin(ksi/r)
+
+		if theta_0==0 and ksi==0:
+			phi = phi_0 - np.pi/2
+		else:
+			phi = phi_0 - np.arctan(eta/(d*np.sin(theta_0)-ksi*np.cos(theta_0)))
+		
+		return r,theta,phi
+		
+	except FloatingPointError:
+		print("****planar_to_spherical error: division by zero.")
+		
+	except NotProperShapeError, arg:
+		print("****planar_to_spherical error: ", arg.msg)
+
+def spherical_to_cartesian(r, theta, phi):
+	"""
+    This function transforms spherical coordinates r, theta, phi,
+    into cartesian coordinates
+
+    Parameters
+    ----------
+    r : real
+    	Distance of the point from the origin
+    theta : real
+        Coordinate theta of the point
+    phi : real
+        Coordinate phi of the point
+
+    Returns
+    -------
+    x, y, z : reals
+        Cartesian coordinates of the point
+    """
+	try:
+		r = np.asarray(r, dtype=np.float64)
+		theta = np.asarray(theta, dtype=np.float64)
+		phi = np.asarray(phi, dtype=np.float64)
+		
+		if len(r.shape) > 1 or len(theta.shape) > 1 or len(phi.shape) > 1:
+			raise NotProperShapeError("r, theta, phi must be 1D arrays.")
+
+		if r.shape != theta.shape or r.shape != phi.shape:
+			raise NotProperShapeError("ksi and eta must have the same length.")
+
+		x = r * np.sin(theta) * np.cos(phi)
+		y = r * np.sin(theta) * np.sin(phi)
+		z = r * np.cos(theta)
+
+		return x,y,z
+
+	except NotProperShapeError, arg:
+		print("****spherical_to_cartesian error: ", arg.msg)
+
+def plan_cartesian_equation(theta_0, phi_0, d):
+	"""
+	This function computes the cartesian equation of the plane
+	which center has (theta_0, phi_0, d) spherical coordinates
+	and which normal vector is directed toward the origin.
+
+	Parameters
+	----------
+	theta_0 : real
+		Coordinate theta of the plane origin
+	phi_0 : real
+		Coordinate phi of the plane origin
+	d : real
+		Distance from the plane origin to the origin
+
+	Returns
+	-------
+	a, b, c, d : reals
+		Coefficients of the cartesian equation
+		ax + by + cz + d = 0 of the plan.
+    """
+    # Plan origin in cartesian coordinates
+	plan_origin_sph = [d,theta_0,phi_0]
+	plan_origin_cart = np.asarray(spherical_to_cartesian(plan_origin_sph[0],plan_origin_sph[1],plan_origin_sph[2]))
+
+	eta_sph = planar_to_spherical(1.,0.,theta_0,phi_0,d)
+	eta_cart = np.asarray(spherical_to_cartesian(eta_sph[0],eta_sph[1],eta_sph[2]))
+	
+	ksi_sph = planar_to_spherical(0.,1.,theta_0,phi_0,d)
+	ksi_cart = np.asarray(spherical_to_cartesian(ksi_sph[0],ksi_sph[1],ksi_sph[2]))
+
+	# Direction vectors of the plan in cartesian coordinates
+	u = eta_cart - plan_origin_cart
+	v = ksi_cart - plan_origin_cart
+
+	# Coefficients of the plan cartesian equation
+	a = u[1] * v[2] - u[2] * v[1]
+	b = u[2] * v[0] - u[0] * v[2]
+	c = u[0] * v[1] - u[1] * v[0]
+	d = -(plan_origin_cart[0] * a + plan_origin_cart[1] * b + plan_origin_cart[2] * c) 
+	
+	return a,b,c,d
+	
+def plot_plan(a, b, c, d):
+	# plane equation is a*x+b*y+c*z+d=0
+	# create support in (x0y) plane
+	xx, yy = np.meshgrid(range(-5,5), range(-5,5))
+
+	# calculate corresponding z
+	z = (-a * xx - b * yy - d) * 1. /c
+
+	# plot the surface
+	plt3d = plt.figure().gca(projection='3d')
+	plt3d.plot_surface(xx, yy, z)
+	plt.show()
+
+def planar_to_gradient(eta, ksi, s1=None, e_eta=None, e_ksi=None, n=None):
+	"""
+	This function computes the surface derivatives of the reflector
+	for incident rays s1 and impact points of reflected rays in (eta,ksi)
+	Parameters
+	----------
+	eta : 1D array
+		Coordinate eta on the target plane
+	ksi : 1D array
+		Coordinate ksi on the target plane
+	e_eta : (1,3) array
+		vector e_eta of the target plane basis
+	e_ksi : (1,3) array
+		vector e_ksi of the target plane basis
+	n : (1,3) array
+		unique normal vector of the plane directed
+		toward the origin
+	s1 : (1,3) array
+		Incident ray direction
+
+	Returns
+	-------
+	p,q : 1D arrays
+		surface derivatives of the reflector
+		
+	See Also
+	--------
+	Inverse Methods for Illumination Optics, Corien Prins, chapter 5.3.1
+    """
+	if e_eta is None or e_ksi is None or np is None:
+		# We define an orthonormal basis for the plane
+		e_eta = np.array([0.,-1,0.])
+		e_ksi = np.array([0.,0.,1.])
+		n = np.array([-10.,0.,0.])
+	
+	if s1 is None:
+		s1 = np.array([0.,0.,1.])
+		
+	d = np.linalg.norm(n)
+	n = n / d
+	
+	s1 = s1 / np.linalg.norm(s1)
+	
+	# Reflected rays
+	s2 = np.zeros((len(eta),3))
+	s2[:,0] = eta*e_eta[0] + ksi*e_ksi[0] - d*n[0]
+	s2[:,1] = eta*e_eta[1] + ksi*e_ksi[1] - d*n[1]
+	s2[:,2] = eta*e_eta[2] + ksi*e_ksi[2] - d*n[2]
+	
+	#print(s2)
+	#print(np.linalg.norm(s2, axis=1)[:, np.newaxis])
+	s2 = s2 / np.linalg.norm(s2, axis=1)[:, np.newaxis]
+	#print(s2)
+	
+	p = -(s2[:,0] - s1[0])/(s2[:,2] - s1[2])
+	q = -(s2[:,1] - s1[1])/(s2[:,2] - s1[2])
+	return p, q
