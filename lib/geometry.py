@@ -514,27 +514,33 @@ def planar_to_gradient(eta, ksi, s1=None, e_eta=None, e_ksi=None, n=None):
 		# We define an orthonormal basis for the plane
 		e_eta = np.array([0.,-1,0.])
 		e_ksi = np.array([0.,0.,1.])
-		n = np.array([-10.,0.,0.])
+		n = np.array([0.,0.,0.])
 	
 	if s1 is None:
 		s1 = np.array([0.,0.,1.])
+	try:	
+		d = np.linalg.norm(n)
+		if d==0:
+			raise ZeroDivisionError
+		n = n / d
+	
+		s1 = s1 / np.linalg.norm(s1)
+	
+		# Reflected rays
+		s2 = np.zeros((len(eta),3))
+		s2[:,0] = eta*e_eta[0] + ksi*e_ksi[0] - d*n[0]
+		s2[:,1] = eta*e_eta[1] + ksi*e_ksi[1] - d*n[1]
+		s2[:,2] = eta*e_eta[2] + ksi*e_ksi[2] - d*n[2]
+	
+		#print(s2)
+		#print(np.linalg.norm(s2, axis=1)[:, np.newaxis])
+		s2 = s2 / np.linalg.norm(s2, axis=1)[:, np.newaxis]
+		#print(s2)
+	
+		p = -(s2[:,0] - s1[0])/(s2[:,2] - s1[2])
+		q = -(s2[:,1] - s1[1])/(s2[:,2] - s1[2])
+	
+		return p, q
 		
-	d = np.linalg.norm(n)
-	n = n / d
-	
-	s1 = s1 / np.linalg.norm(s1)
-	
-	# Reflected rays
-	s2 = np.zeros((len(eta),3))
-	s2[:,0] = eta*e_eta[0] + ksi*e_ksi[0] - d*n[0]
-	s2[:,1] = eta*e_eta[1] + ksi*e_ksi[1] - d*n[1]
-	s2[:,2] = eta*e_eta[2] + ksi*e_ksi[2] - d*n[2]
-	
-	#print(s2)
-	#print(np.linalg.norm(s2, axis=1)[:, np.newaxis])
-	s2 = s2 / np.linalg.norm(s2, axis=1)[:, np.newaxis]
-	#print(s2)
-	
-	p = -(s2[:,0] - s1[0])/(s2[:,2] - s1[2])
-	q = -(s2[:,1] - s1[1])/(s2[:,2] - s1[2])
-	return p, q
+	except ZeroDivisionError:
+		print("****planar_to_gradient error")
