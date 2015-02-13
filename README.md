@@ -6,6 +6,7 @@ into a specified output intensity.
 Dependencies
 ============
 + MongeAmpere/PyMongeAmpere
++ numpy 1.9
 + pyhull
 + pillow
 
