@@ -7,7 +7,7 @@ import scipy.sparse as sparse
 from mpl_toolkits.mplot3d import Axes3D
 from pyhull.convex_hull import ConvexHull
 
-def presolution(target_pts, source_pts, source_w=None, target_w=None):
+def presolution(target_pts, source_pts, target_w=None, source_w=None):
 	"""
 	This function calculates psi0, a first estimation of psi.
 	
@@ -79,8 +79,8 @@ def presolution(target_pts, source_pts, source_w=None, target_w=None):
 	fig = plt.gcf()
 	ax = plt.gca()
 	ax.cla() # clear things for fresh plot
-	ax.set_xlim((-0.5,5))
-	ax.set_ylim((-0.5,5))
+	#ax.set_xlim((-0.5,5))
+	#ax.set_ylim((-0.5,5))
 	fig.gca().add_artist(circle1)
 	fig.gca().add_artist(points1)
 	fig.gca().add_artist(circle2)

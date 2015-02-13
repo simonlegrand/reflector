@@ -90,20 +90,65 @@ class GeometryTest(unittest.TestCase):
 	def test_planar_to_spherical(self):
 		d = 1.
 		theta_0 = np.pi/2
-		psi_0 = 0
-		self.assertTrue(np.allclose(geo.planar_to_spherical(1.,1.,theta_0,psi_0,d)[0],0.9553166))
-		self.assertTrue(np.allclose(geo.planar_to_spherical(1.,1.,theta_0,psi_0,d)[1],-np.pi/4))
+		phi_0 = 0
+		self.assertTrue(np.allclose(geo.planar_to_spherical(0.,0.,theta_0,phi_0,d)[0],1))
+		self.assertTrue(np.allclose(geo.planar_to_spherical(0.,0.,theta_0,phi_0,d)[1],theta_0))
+		self.assertTrue(np.allclose(geo.planar_to_spherical(0.,0.,theta_0,phi_0,d)[2],phi_0))
 		
-		theta_0 = np.pi/4
-		psi_0 = np.pi
-		self.assertTrue(np.allclose(geo.planar_to_spherical(1.,1.,theta_0,psi_0,d)[0],0.1699184))
-		self.assertTrue(np.allclose(geo.planar_to_spherical(1.,1.,theta_0,psi_0,d)[1],3*np.pi/4))
-		"""eta = np.array([np.sqrt(3),1.])
-		ksi = np.array([np.sqrt(3)/2,1.])
-		self.assertTrue(np.allclose(geo.planar_to_spherical(eta,ksi,np.pi/2,0.,d)[0],[np.pi/3, 0.9553166]))
-		self.assertTrue(np.allclose(geo.planar_to_spherical(eta,ksi,np.pi/2,0.,d)[1],[np.pi/3.,np.pi/4]))
+		self.assertTrue(np.allclose(geo.planar_to_spherical(1.,1.,theta_0,phi_0,d)[0],np.sqrt(3)))
+		self.assertTrue(np.allclose(geo.planar_to_spherical(1.,1.,theta_0,phi_0,d)[1],0.9553166))
+		self.assertTrue(np.allclose(geo.planar_to_spherical(1.,1.,theta_0,phi_0,d)[2],-np.pi/4))
 		
-		eta = np.append(eta,1.)
-		self.assertRaises(geo.NotProperShapeError,geo.planar_to_spherical(eta,ksi,np.pi/2,0.,d))
-		eta = np.append([eta],[[1.,1.,1.]],axis=0)
-		self.assertRaises(geo.NotProperShapeError,geo.planar_to_spherical(eta,ksi,np.pi/2,0.,d))"""
+		phi_0 = np.pi
+		self.assertTrue(np.allclose(geo.planar_to_spherical(1.,1.,theta_0,phi_0,d)[0],np.sqrt(3)))
+		self.assertTrue(np.allclose(geo.planar_to_spherical(1.,1.,theta_0,phi_0,d)[1],0.9553166))
+		self.assertTrue(np.allclose(geo.planar_to_spherical(1.,1.,theta_0,phi_0,d)[2],3*np.pi/4))
+		
+		theta_0 = 0
+		phi_0 = np.pi
+		self.assertTrue(np.allclose(geo.planar_to_spherical(1.,0,theta_0,phi_0,d)[2],np.pi/2))
+		
+		
+	def test_spherical_to_cartesian(self):
+		r = 1.
+		theta = np.pi/2
+		phi = 0
+		self.assertTrue(np.allclose(geo.spherical_to_cartesian(r,theta,phi),[1.,0.,0.]))
+		
+		#Test for a cube
+		theta = np.pi/2. - np.arctan(1./np.sqrt(2))
+		phi = np.pi/4
+		self.assertTrue(np.allclose(geo.spherical_to_cartesian(r,theta,phi),[1./np.sqrt(3),1./np.sqrt(3),1./np.sqrt(3)]))
+		
+		r = np.array([1.,1.])
+		theta = np.array([np.pi/2,np.pi/2. - np.arctan(1./np.sqrt(2))])
+		phi = np.array([0.,np.pi/4.])
+		self.assertTrue(np.allclose(geo.spherical_to_cartesian(r,theta,phi)[0],np.array([1.,1/np.sqrt(3)])))
+		
+		
+	def test_plan_cartesian_equation(self):
+		# plan parallel to (yOz)
+		d = 10.
+		theta_0 = np.pi/2
+		phi_0 = 0
+		result = np.array([-1,0,0,10])
+		self.assertTrue(np.allclose(geo.plan_cartesian_equation(theta_0,phi_0,d),result))
+		
+		d = 5.
+		theta_0 = np.pi/2
+		phi_0 = np.pi/2
+		result = np.array([0,-1,0,5])
+		self.assertTrue(np.allclose(geo.plan_cartesian_equation(theta_0,phi_0,d),result))
+		
+		"""d = 3.
+		theta_0 = np.pi/6
+		phi_0 = np.pi/4
+		a,b,c,d = geo.plan_cartesian_equation(theta_0,phi_0,d)
+		#print(a,b,c,d)
+		geo.plot_plan(a,b,c,d)"""
+		
+	
+	def test_planar_to_gradient(self):
+		
+		X = np.random.rand(4,2)
+		geo.planar_to_gradient(X[:,0], X[:,1])
