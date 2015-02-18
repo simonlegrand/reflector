@@ -17,7 +17,7 @@ def rgb_to_gray(imcolor):
 	Parameters
 	----------
 	imcolor : 3D array
-		Three layers of color RGB.
+		Three layers RGB.
 		
 	Returns
 	-------
@@ -44,12 +44,14 @@ def input_preprocessing(arg, switch):
 		
 	Returns
 	-------
-	dens : Density_2 object
+	X : 2D array
+	mu : Density_2 object
+	Y : 2D array
+	nu : 1D array
 	"""
-	if len(arg) != 3:
-		source = "square"
-		target = "triangle"
-		N = 100
+	if len(arg) != 3:	# If no argument is passed
+		
+		N = 1000
 		x = np.array([-0.5,-0.5,0.5,0.5])
 		y = np.array([-0.5,0.5,-0.5,0.5])
 		square = np.array([x,y]).T
@@ -59,24 +61,26 @@ def input_preprocessing(arg, switch):
 		tri = np.array([x,y]).T
 		
 		if switch=='XY':
-			mu= ma.Density_2(square)
-			square = ma.optimized_sampling_2(mu,N)
+			mu = ma.Density_2(square)
+			X = ma.optimized_sampling_2(mu,N)
 			
 			dens = ma.Density_2(tri)
-			tri = ma.optimized_sampling_2(dens,N)
+			Y = ma.optimized_sampling_2(dens,N)
 			nu = np.ones(N) * (mu.mass() / N)
-			return square,mu,tri,nu
+			return X,mu,Y,nu
 			
 		elif switch=='YX':
-			mu= ma.Density_2(tri)
-			tri = ma.optimized_sampling_2(mu,N)
+			mu = ma.Density_2(tri)
+			X = ma.optimized_sampling_2(mu,N)
 			
 			dens = ma.Density_2(square)
-			square = ma.optimized_sampling_2(dens,N)
+			Y = ma.optimized_sampling_2(dens,N)
 			nu = np.ones(N) * (mu.mass() / N)
-			return tri,mu,square,nu
+			return X,mu,Y,nu
+			
 		else:
 			print("****Error : Wrong switch value")
+			sys.exit()
 	else:
 		source = arg[1]
 		target = arg[2]
@@ -84,10 +88,9 @@ def input_preprocessing(arg, switch):
 	extension_source = os.path.splitext(source)[1]
 	extension_target = os.path.splitext(target)[1]
 	
-	Nimg = 5000
-	Nshape = 100
-	# Modifier et inclure ds une boucle
-	# qui parcourt les 2 argv
+	Nimg = 5000		# Number of points for a picture
+	Nshape = 1000	# Number of points for a shape
+	
 	if extension_source == ".txt":
 		pts_source = read_data(source)
 		dens_source = ma.Density_2(pts_source)
@@ -108,18 +111,22 @@ def input_preprocessing(arg, switch):
 
 	if switch=='XY':
 		N = len(pts_target)
-		w_target = np.ones(N) * (dens_source.mass() / N)
-		return pts_source, dens_source, pts_target, w_target
+		nu = np.ones(N) * (dens_source.mass() / N)
+		return pts_source, dens_source, pts_target, nu
 
-	if switch=='YX':
+	elif switch=='YX':
 		N = len(pts_source)
-		w_source = np.ones(N) * (dens_target.mass() / N)
-		return pts_target, dens_target, pts_source, w_source
+		nu = np.ones(N) * (dens_target.mass() / N)
+		return pts_target, dens_target, pts_source, nu
+	
+	else:
+			print("****Error : Wrong switch value")
+			sys.exit()
 		
 def read_data(fn):
 	"""
-	This function returns a Density_2 object,
-	determined from points in the file fn.
+	This function returns points coordinates
+	contained in file fn.
 	
 	Parameters
 	----------
@@ -128,7 +135,8 @@ def read_data(fn):
 		
 	Returns
 	-------
-	dens : Density_2 object
+	X : 2D array
+		Points coordinates of the polygon
 	"""
 	try:
 		f = open(fn, "r")
@@ -168,9 +176,8 @@ def read_data(fn):
 
 def read_image(fn, size):
 	"""
-	This function returns a Density_2 object, 
-	determined from a picture.
-	If the picture is in rgb, it will be grayscaled.
+	This function returns pixels value between 0 and 1.
+	If the picture is in rgb, it is grayscaled.
 	
 	Parameters
 	----------
@@ -181,7 +188,10 @@ def read_image(fn, size):
 		
 	Returns
 	-------
-	dens : Density_2 object describing picture density
+	img : 2D array
+		Pixels values
+	box : 1D array
+		Bounding box of the picture
 	"""
 	try:
 		image = sp.misc.imread(fn)
@@ -203,8 +213,6 @@ def read_image(fn, size):
 		
 		img = sp.misc.imresize(img, (nlin,ncol))
 		img = np.asarray(img, dtype=float)
-		# Threshold to avoid empty Laguerre cells on black areas
-		img[img<10.0] = 10.0
 		img = img / 255.0
 		
 		xmin = -(size * ratio) / 2.
@@ -219,13 +227,39 @@ def read_image(fn, size):
 	except ValueError:
 		print ("Error: wrong data type in the file")
 		
+		
 def eval_legendre_fenchel(mu, Y, psi):
+	"""
+	This function returns centers of laguerre cells Z,
+	the delaunay triangulation of these points and the 
+	Legendre-Fenchel transform of psi.
+	
+	Parameters
+	----------
+	mu : Density_2 object
+		Density of X ensemble
+	Y : 2D array
+		Points on the Y ensemble
+	psi : 1D array
+		Functionnal values on Y
+			
+	Returns
+	-------
+	Z : 2D array
+		Laguerre cells centers coordinates
+	T : delaunay_2 object
+		Weighted Delaunay triangulation of Z
+	psi_star_tilde : 1D array
+		Legendre-Fenchel transform of psi
+	"""
 	# on trouve un point dans chaque cellule de Laguerre
 	Z = mu.lloyd(Y,psi)[0]
+	
 	# par definition, psi^*(z) = min_{y\in Y} |y - z|^2 - psi_y
 	# Comme Z[i] est dans la cellule de Laguerre de Y[i], la formule se simplifie:
 	psi_star = np.square(Y[:,0] - Z[:,0]) + np.square(Y[:,1] - Z[:,1]) - psi
 	T = ma.delaunay_2(Z, psi_star)
+	
 	# ensuite, on modifie pour retrouver une fonction convexe \tilde{psi^*} telle
 	# que \grad \tilde{\psi^*}(z) = y si z \in Lag_Y^\psi(y)
 	psi_star_tilde = np.square(Z[:,0]) + np.square(Z[:,1])/2 - psi_star/2

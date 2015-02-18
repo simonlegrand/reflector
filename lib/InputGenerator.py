@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 ##### Regular polygon #####
 if sys.argv[1] == "polygon":
-	r = 1.0					# Radius of the polygon circumscribed circle 
+	r = 0.5					# Radius of the polygon circumscribed circle 
 	Nx = 50					# Number of vertices
 	c = [0.0, 0.0]			# Center
 	t = np.linspace(0,2*np.pi, Nx+1);

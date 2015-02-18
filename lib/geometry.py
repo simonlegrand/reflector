@@ -510,7 +510,7 @@ def planar_to_gradient(eta, ksi, s1=None, e_eta=None, e_ksi=None, n=None):
 	--------
 	Inverse Methods for Illumination Optics, Corien Prins, chapter 5.3.1
     """
-	if e_eta is None or e_ksi is None or np is None:
+	if e_eta is None or e_ksi is None or n is None:
 		# We define an orthonormal basis for the plane
 		e_eta = np.array([0.,-1,0.])
 		e_ksi = np.array([0.,0.,1.])
