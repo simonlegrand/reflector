@@ -16,6 +16,7 @@ import MongeAmpere as ma
 from presolution import *
 from preprocessing import *
 import geometry as geo
+import rayTracing as ray
 
 debut = time.clock()
 
@@ -23,8 +24,8 @@ debut = time.clock()
 # or discrete to continue (YX)
 switch = 'XY'
 
-# Projection plan basis
-n_plan = np.array([-10.,0.,0.])
+# Target plan basis
+n_plan = np.array([-5.,0.,0.])
 e_eta = np.array([0.,-1,0.])
 e_ksi = np.array([0.,0.,1.])
 
@@ -47,14 +48,12 @@ if switch=='XY':
 	t = time.clock() - t
 	print ("OT resolution:", t, "s")
 
-	##### Output processing #####
-	[gridx, gridy] = np.meshgrid(np.linspace(np.min(Z[:,0]), np.max(Z[:,0]), 100), np.linspace(np.min(Z[:,1]), np.max(Z[:,1]), 100))
-	gridx = np.reshape(gridx, (10000))
-	gridy = np.reshape(gridy, (10000))
-
-	[gx1, gy1] = interpol.gradient(Z[:,0], Z[:,1])
-	[gx, gy] = interpol.gradient(gridx, gridy)
-
+	##### Ray tracing #####
+	s1 = np.array([0.,0.,1.])
+	source_box = [np.min(Z[:,0]), np.max(Z[:,0]), np.min(Z[:,1]), np.max(Z[:,1])]
+	target_box = [np.min(Y[:,0]), np.max(Y[:,0]), np.min(Y[:,1]), np.max(Y[:,1])]
+	ray.ray_tracer(s1, source_box, target_box, interpol, e_eta, e_ksi, n_plan, niter=200)
+	
 
 if switch=='YX':
 	gradx, grady = geo.planar_to_gradient(X[:,0],X[:,1],e_eta=e_eta,e_ksi=e_ksi,n=n_plan)
@@ -77,25 +76,18 @@ if switch=='YX':
 	
 	##### Output processing #####
 	[gridx, gridy] = np.meshgrid(np.linspace(np.min(Y[:,0]), np.max(Y[:,0]), 100), np.linspace(np.min(Y[:,1]), np.max(Y[:,1]), 100))
-	[gx, gy] = interpol.gradient(Y[:,0], Y[:,1])
-	
-##### Plot reflector shape #####
-
-fig = plt.figure()
-ax = Axes3D(fig)
-ax.scatter(gridx,gridy,interpol(gridx,gridy), marker=".", lw=0.1)
-plt.show()
+	[grad, grady] = interpol.gradient(Y[:,0], Y[:,1])
 
 
 print ("Execution time:", time.clock() - debut, "s")
-
+"""
 s = plt.scatter(X[:,0], X[:,1], c='b', marker=".", lw=0.1)
-t = plt.scatter(gx, gy, color='r', marker=".", lw=0.1)
-t1 = plt.scatter(gx1, gy1, color='g', marker=".", lw=0.1)
+t = plt.scatter(gradx, grady, color='r', marker=".", lw=0.1)
+#t1 = plt.scatter(gx1, gy1, color='g', marker=".", lw=0.1)
 fig = plt.gcf()
 ax = plt.gca()
 ax.cla() # clear things for fresh plot
 fig.gca().add_artist(s)
 fig.gca().add_artist(t)
-fig.gca().add_artist(t1)
-plt.show()
+#fig.gca().add_artist(t1)
+plt.show()"""

@@ -88,8 +88,8 @@ def input_preprocessing(arg, switch):
 	extension_source = os.path.splitext(source)[1]
 	extension_target = os.path.splitext(target)[1]
 	
-	Nimg = 5000		# Number of points for a picture
-	Nshape = 1000	# Number of points for a shape
+	Nimg = 262144	# Number of diracs for a picture
+	Nshape = 5000	# Number of diracs for a shape
 	
 	if extension_source == ".txt":
 		pts_source = read_data(source)
@@ -98,7 +98,10 @@ def input_preprocessing(arg, switch):
 	else:
 		img,box = read_image(source, 1.)
 		dens_source = ma.Density_2.from_image(img,box)
-		pts_source = ma.optimized_sampling_2(dens_source, Nimg, niter=1)
+		if Nimg > 10000:
+			pts_target = regular_sampling(img,box)
+		else:
+			pts_target = ma.optimized_sampling_2(dens_target, Nimg, niter=1)
 
 	if extension_target == ".txt":
 		pts_target = read_data(target)
@@ -107,16 +110,27 @@ def input_preprocessing(arg, switch):
 	else:
 		img,box = read_image(target, 1.)
 		dens_target = ma.Density_2.from_image(img,box)
-		pts_target = ma.optimized_sampling_2(dens_target, Nimg, niter=1)
+		if Nimg > 10000:
+			pts_target = regular_sampling(img,box)
+		else:
+			pts_target = ma.optimized_sampling_2(dens_target, Nimg, niter=1)
 
 	if switch=='XY':
 		N = len(pts_target)
-		nu = np.ones(N) * (dens_source.mass() / N)
+		if Nimg > 10000:
+			nu = np.reshape(img,(N))
+			nu = nu * (dens_source.mass()/sum(nu))
+		else:
+			nu = np.ones(N) * (dens_source.mass() / N)
 		return pts_source, dens_source, pts_target, nu
 
 	elif switch=='YX':
 		N = len(pts_source)
-		nu = np.ones(N) * (dens_target.mass() / N)
+		if Nimg > 10000:
+			nu = np.reshape(img,(N))
+			nu = nu * (dens_source.mass()/sum(nu))
+		else:
+			nu = np.ones(N) * (dens_source.mass() / N)
 		return pts_target, dens_target, pts_source, nu
 	
 	else:
@@ -207,19 +221,19 @@ def read_image(fn, size):
 		
 		ratio = dims[0] / dims[1]
 
-		n = 64
-		nlin = int(n * ratio)
-		ncol = int(n * ratio)	
+		nlin = 512
+		ncol = int(nlin / ratio)	
 		
 		img = sp.misc.imresize(img, (nlin,ncol))
 		img = np.asarray(img, dtype=float)
 		img = img / 255.0
 		
-		xmin = -(size * ratio) / 2.
-		ymin = -(size * ratio) / 2.
+		xmin = -(size / ratio) / 2.
+		ymin = -size / 2.
 
 		box = [xmin,-xmin,-ymin,ymin]
-
+		#plt.imshow(img)
+		#plt.show()
 		return img, box	 	
 		
 	except IOError:
@@ -262,10 +276,21 @@ def eval_legendre_fenchel(mu, Y, psi):
 	
 	# ensuite, on modifie pour retrouver une fonction convexe \tilde{psi^*} telle
 	# que \grad \tilde{\psi^*}(z) = y si z \in Lag_Y^\psi(y)
-	psi_star_tilde = np.square(Z[:,0]) + np.square(Z[:,1])/2 - psi_star/2
+	psi_star_tilde = (np.square(Z[:,0]) + np.square(Z[:,1]))/2 - psi_star/2
 	return Z,T,psi_star_tilde
 	
 def make_cubic_interpolator(Z,T,psi,grad):
 	T = tri.Triangulation(Z[:,0],Z[:,1],T)
 	interpol = tri.CubicTriInterpolator(T, psi, kind='user', dz=(grad[:,0],grad[:,1]))
 	return interpol	
+	
+def regular_sampling(img,box):
+	h = img.shape[0]
+	w = img.shape[1]
+	[x,y] = np.meshgrid(np.linspace(box[0],box[1],w),
+		                np.linspace(box[2],box[3],h))
+	Nx = w*h
+	x = np.reshape(x,(Nx))
+	y = np.reshape(y,(Nx))
+	X = np.vstack([x,y]).T
+	return X
