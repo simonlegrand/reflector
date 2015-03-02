@@ -21,6 +21,6 @@ Warning
 =======
 The algorithm used to solve the semi-discrete Monge-Ampere equation only works
 for a convex density. If source or target is non-convex, you can use the
-"XY" switch in the code to chose which of the source or target is a density.
+"XY" switch in reflecteur.py to chose which of the source or target is a density.
 
 
