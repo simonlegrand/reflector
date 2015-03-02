@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import scipy.sparse as sparse
+from mpi4py import MPI
 
 class GeometricError(Exception):
 	"""
@@ -50,13 +51,14 @@ def reflection(grid, I, s1):
 	return s2
 
 
-def ray_tracer(s1, s_box, t_box, interpol, e_eta, e_ksi, n_plan, niter=None):
+def ray_tracer(comm, s1, s_box, t_box, interpol, e_eta, e_ksi, n_plan, niter=None):
 	"""
 	This function computes the simulation of reflection on the reflector
 	and plot the image produced on the target screen.
 	
 	Parameters
 	----------
+	comm : MPI communicator
 	s1 : array (N,3)
 		direction of incident rays
 	s_box : tuple[4]
@@ -69,9 +71,17 @@ def ray_tracer(s1, s_box, t_box, interpol, e_eta, e_ksi, n_plan, niter=None):
 	e_eta , e_ksi : Direct orthonormal 
 		basis of the target plan
 	n_plan : Normal vector to the target plan
-	"""	
+	niter : Number of loops
 	
-	plot_reflector(interpol, s_box)
+	Returns :
+	---------
+	M : Matrix filled with rays intersecting
+	the t_box.
+	"""
+	rank = comm.Get_rank()
+	size = comm.Get_size()
+	if rank == 0:
+		plot_reflector(interpol, s_box)
 
 	M = None
 	if niter is None:
@@ -130,11 +140,12 @@ def ray_tracer(s1, s_box, t_box, interpol, e_eta, e_ksi, n_plan, niter=None):
 			M = Miter
 		else:
 			M += Miter
-	
-		print((i+1)*nray," rays thrown")
-	M = 255.0*M/np.amax(M)
-		    
+		
+		if rank == 0:
+			print(size*(i+1)*nray," rays thrown")
+		
 	return M
+		
 	
 def plot_reflector(I, box):
 	"""

@@ -27,7 +27,7 @@ def rgb_to_gray(imcolor):
 	imgray = 0.299*imcolor[:,:,0] + 0.587*imcolor[:,:,1] + 0.114*imcolor[:,:,2]
 	return imgray
 	
-def input_preprocessing(arg, switch):
+def input_preprocessing(arg):
 	"""
 	Leads to the proper input treatment
 	according to arg and switch.
@@ -35,12 +35,8 @@ def input_preprocessing(arg, switch):
 	Parameters
 	----------
 	arg : string
-		arg[1] : source
-		arg[2] : target
-	switch : string
-		Indicates the type of transformation
-		'XY' = continue->discrete
-		'YX' = discrete->continue
+		arg[1] : source file name
+		arg[2] : target file name
 		
 	Returns
 	-------
@@ -49,9 +45,11 @@ def input_preprocessing(arg, switch):
 	Y : 2D array
 	nu : 1D array
 	"""
+	Nimg = 100000	# Number of diracs for a picture
+	Nshape = 20000	# Number of diracs for a shape
+	
 	if len(arg) != 3:	# If no argument is passed
 		
-		N = 1000
 		x = np.array([-0.5,-0.5,0.5,0.5])
 		y = np.array([-0.5,0.5,-0.5,0.5])
 		square = np.array([x,y]).T
@@ -60,83 +58,55 @@ def input_preprocessing(arg, switch):
 		y = np.array([0.,0.433,-0.433])
 		tri = np.array([x,y]).T
 		
-		if switch=='XY':
-			mu = ma.Density_2(square)
-			X = ma.optimized_sampling_2(mu,N)
+		mu = ma.Density_2(square)
+		X = ma.optimized_sampling_2(mu,Nshape)
+		
+		dens_target = ma.Density_2(tri)
+		Y = ma.optimized_sampling_2(dens_target,Nshape)
+		nu = np.ones(Nshape) * (mu.mass() / Nshape)
+		return X,mu,Y,nu
 			
-			dens = ma.Density_2(tri)
-			Y = ma.optimized_sampling_2(dens,N)
-			nu = np.ones(N) * (mu.mass() / N)
-			return X,mu,Y,nu
-			
-		elif switch=='YX':
-			mu = ma.Density_2(tri)
-			X = ma.optimized_sampling_2(mu,N)
-			
-			dens = ma.Density_2(square)
-			Y = ma.optimized_sampling_2(dens,N)
-			nu = np.ones(N) * (mu.mass() / N)
-			return X,mu,Y,nu
-			
-		else:
-			print("****Error : Wrong switch value")
-			sys.exit()
-	else:
-		source = arg[1]
-		target = arg[2]
-	
+	source = arg[1]
+	target = arg[2]
 	extension_source = os.path.splitext(source)[1]
 	extension_target = os.path.splitext(target)[1]
-	
-	Nimg = 262144	# Number of diracs for a picture
-	Nshape = 5000	# Number of diracs for a shape
-	
+
 	if extension_source == ".txt":
-		pts_source = read_data(source)
-		dens_source = ma.Density_2(pts_source)
-		pts_source = ma.optimized_sampling_2(dens_source, Nshape, niter=1)
+		X = read_data(source)
+		mu = ma.Density_2(X)
+		X = ma.optimized_sampling_2(mu, Nshape, niter=1)
 	else:
 		img,box = read_image(source, 1.)
-		dens_source = ma.Density_2.from_image(img,box)
+		mu = ma.Density_2.from_image(img,box)
 		if Nimg > 10000:
-			pts_target = regular_sampling(img,box)
+			X = regular_sampling(img,box)
 		else:
-			pts_target = ma.optimized_sampling_2(dens_target, Nimg, niter=1)
+			X = ma.optimized_sampling_2(mu, Nimg, niter=1)
 
 	if extension_target == ".txt":
-		pts_target = read_data(target)
-		dens_target = ma.Density_2(pts_target)
-		pts_target = ma.optimized_sampling_2(dens_target, Nshape, niter=1)
+		Y = read_data(target)
+		dens_target = ma.Density_2(Y)
+		Y = ma.optimized_sampling_2(dens_target, Nshape, niter=2)
+		nu = np.ones(Nshape) * (mu.mass() / Nshape)
 	else:
 		img,box = read_image(target, 1.)
 		dens_target = ma.Density_2.from_image(img,box)
 		if Nimg > 10000:
-			pts_target = regular_sampling(img,box)
-		else:
-			pts_target = ma.optimized_sampling_2(dens_target, Nimg, niter=1)
-
-	if switch=='XY':
-		N = len(pts_target)
-		if Nimg > 10000:
+			Y = regular_sampling(img,box)
+			N = len(Y)
 			nu = np.reshape(img,(N))
-			nu = nu * (dens_source.mass()/sum(nu))
+			zero = np.zeros(nu.shape)
+			J = np.greater(nu,zero)
+			Y = Y[J]
+			nu = nu[J]
+			nu = nu * (mu.mass()/sum(nu))
 		else:
-			nu = np.ones(N) * (dens_source.mass() / N)
-		return pts_source, dens_source, pts_target, nu
+			Y = ma.optimized_sampling_2(dens_target, Nimg, niter=2)
+			nu = np.ones(Nimg) * (mu.mass() / Nimg)
 
-	elif switch=='YX':
-		N = len(pts_source)
-		if Nimg > 10000:
-			nu = np.reshape(img,(N))
-			nu = nu * (dens_source.mass()/sum(nu))
-		else:
-			nu = np.ones(N) * (dens_source.mass() / N)
-		return pts_target, dens_target, pts_source, nu
-	
-	else:
-			print("****Error : Wrong switch value")
-			sys.exit()
-		
+	return X, mu, Y, nu
+
+
 def read_data(fn):
 	"""
 	This function returns points coordinates
@@ -227,7 +197,6 @@ def read_image(fn, size):
 		img = sp.misc.imresize(img, (nlin,ncol))
 		img = np.asarray(img, dtype=float)
 		img = img / 255.0
-		
 		xmin = -(size / ratio) / 2.
 		ymin = -size / 2.
 
@@ -280,11 +249,19 @@ def eval_legendre_fenchel(mu, Y, psi):
 	return Z,T,psi_star_tilde
 	
 def make_cubic_interpolator(Z,T,psi,grad):
+	"""
+	This function returns a cubic interpolant
+	of function psi.
+	"""
 	T = tri.Triangulation(Z[:,0],Z[:,1],T)
 	interpol = tri.CubicTriInterpolator(T, psi, kind='user', dz=(grad[:,0],grad[:,1]))
 	return interpol	
 	
 def regular_sampling(img,box):
+	"""
+	This function returns regular sampling of img,
+	corresponding to pixel coordinates.
+	"""
 	h = img.shape[0]
 	w = img.shape[1]
 	[x,y] = np.meshgrid(np.linspace(box[0],box[1],w),
