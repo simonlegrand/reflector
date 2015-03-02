@@ -9,6 +9,7 @@ Dependencies
 + numpy 1.9
 + pyhull
 + pillow
++ mpi4py (optionnal)
 
 Run the program
 ===============
@@ -20,7 +21,14 @@ If no argument is given, default is square source send on a triangle target.
 Warning
 =======
 The algorithm used to solve the semi-discrete Monge-Ampere equation only works
-for a convex density. If source or target is non-convex, you can use the
-"XY" switch in reflecteur.py to chose which of the source or target is a density.
+for a convex density.
+
+Parallelized version
+====================
+reflecteurMPI.py is a parallelized version of reflecteur.py. The ray tracing is the only function prallelized, it is useless to use it if you are not concerned by ray tracing. The command to run the program is:
+``` sh
+mpiexec -n <nbofprocess> python reflecteur.py [source] [target]
+```
+
 
 
