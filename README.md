@@ -15,13 +15,14 @@ Run the program
 ===============
 ``` sh
 reflecteur.py [-h] [--s s] [--t t]
-
-optional arguments:
-  -h, --help         show this help message and exit
-  --s s, --source s  source file name
-  --t t, --target t  target file name
-
 ```
+optional arguments:
+``` sh
+-h, --help         show this help message and exit
+--s s, --source s  source file name
+--t t, --target t  target file name
+```
+
 Default source is a uniform square source and
 default target is a uniform triangle with 10000 diracs.
 
