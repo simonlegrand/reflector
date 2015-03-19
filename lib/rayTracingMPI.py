@@ -26,9 +26,8 @@ def reflection(grid, I, s1):
 	----------
 	s1 : array (N,3)
 		direction of incident rays
-	x : array (N,)
-	y : array (N,)
-	f : array (N,)
+	grid : array (N,2)
+	I : array (N,)
 		Reflector shape function
 		
 	Returns
@@ -51,7 +50,7 @@ def reflection(grid, I, s1):
 	return s2
 
 
-def ray_tracer(comm, s1, s_box, t_box, interpol, e_eta, e_ksi, n_plan, niter=None):
+def ray_tracer(comm, s1, density, s_box, t_box, interpol, e_eta, e_ksi, n_plan, niter=None):
 	"""
 	This function computes the simulation of reflection on the reflector
 	and plot the image produced on the target screen.
@@ -80,17 +79,18 @@ def ray_tracer(comm, s1, s_box, t_box, interpol, e_eta, e_ksi, n_plan, niter=Non
 	"""
 	rank = comm.Get_rank()
 	size = comm.Get_size()
-	if rank == 0:
-		plot_reflector(interpol, s_box)
 
 	M = None
 	if niter is None:
 		niter = 10
 	for i in xrange(niter):
-		nray = 500000
-		x = s_box[0] + np.random.rand(nray) * (s_box[1] - s_box[0])
-		y = s_box[2] + np.random.rand(nray) * (s_box[3] - s_box[2])
-		points = np.vstack([x,y]).T
+		nray = 200000
+		# Generate source point according to
+		# to the source density probability
+		points = density.random_sampling(nray)
+		#x = s_box[0] + np.random.rand(nray) * (s_box[1] - s_box[0])
+		#y = s_box[2] + np.random.rand(nray) * (s_box[3] - s_box[2])
+		#points = np.vstack([x,y]).T
 		s2 = reflection(points, interpol, s1)
 
 		##### New spherical coordinates #####
@@ -145,24 +145,7 @@ def ray_tracer(comm, s1, s_box, t_box, interpol, e_eta, e_ksi, n_plan, niter=Non
 			print(size*(i+1)*nray," rays thrown")
 		
 	return M
-		
 	
-def plot_reflector(I, box):
-	"""
-	This function plots the interpolant I of the 
-	functionnal evaluated on a grid
-	"""
-	nmesh = 100;
-	[x,y] = np.meshgrid(np.linspace(box[0], box[1], nmesh),np.linspace(box[2], box[3], nmesh))
-	Nx = nmesh*nmesh;
-	x = np.reshape(x,(Nx))
-	y = np.reshape(y,(Nx))
-	grid = np.vstack([x,y]).T
-	
-	fig = plt.figure()
-	ax = Axes3D(fig)
-	ax.scatter(grid[:,0],grid[:,1],I(grid[:,0],grid[:,1]), marker=".", lw=0.1)
-	plt.show()
 	
 def fill_sparse_matrix(x,y,box):
 

@@ -5,10 +5,13 @@ sys.path.append('../PyMongeAmpere-build/')
 sys.path.append('../PyMongeAmpere-build/lib')
 import os.path
 import numpy as np
-import MongeAmpere as ma
 import matplotlib.pyplot as plt
 import matplotlib.tri as tri
+from matplotlib import cm
 import scipy as sp
+
+import MongeAmpere as ma
+import misc
 
 def rgb_to_gray(imcolor):
 	"""
@@ -27,16 +30,15 @@ def rgb_to_gray(imcolor):
 	imgray = 0.299*imcolor[:,:,0] + 0.587*imcolor[:,:,1] + 0.114*imcolor[:,:,2]
 	return imgray
 	
-def input_preprocessing(arg):
+def input_preprocessing(parser):
 	"""
 	Leads to the proper input treatment
-	according to arg and switch.
+	according to arg.
 	
 	Parameters
 	----------
-	arg : string
-		arg[1] : source file name
-		arg[2] : target file name
+	parser : parser object
+		Contains source and target file names
 		
 	Returns
 	-------
@@ -45,65 +47,71 @@ def input_preprocessing(arg):
 	Y : 2D array
 	nu : 1D array
 	"""
-	Nimg = 100000	# Number of diracs for a picture
-	Nshape = 20000	# Number of diracs for a shape
+	parser.add_argument('--s', '--source', type=str, default='0', help='source file name',metavar='s')
+	parser.add_argument('--t', '--target', type=str, default='0', help='target file name',metavar='t')
+	args = parser.parse_args()
 	
-	if len(arg) != 3:	# If no argument is passed
+	source = args.s
+	target = args.t
+	
+	#### Source processing ####
+	if source == '0':
 		
 		x = np.array([-0.5,-0.5,0.5,0.5])
 		y = np.array([-0.5,0.5,-0.5,0.5])
-		square = np.array([x,y]).T
-			
+		X = np.array([x,y]).T
+		mu = ma.Density_2(X)
+		
+	else:
+		extension_source = os.path.splitext(source)[1]
+		
+		if extension_source == ".txt":
+			X, X_w = read_data(source)
+			#misc.plot_density(X,X_w)
+			mu = ma.Density_2(X, X_w)
+		
+		else:
+			img,box = read_image(source, 1.)
+			mu = ma.Density_2.from_image(img,box)
+			X = regular_sampling(img,box)
+		
+	#### Target processing ####
+	if target == '0':
+		# Number of diracs for a shape
+		Nshape = 10000
 		x = np.array([0.5,-0.25,-0.25])
 		y = np.array([0.,0.433,-0.433])
 		tri = np.array([x,y]).T
-		
-		mu = ma.Density_2(square)
-		X = ma.optimized_sampling_2(mu,Nshape)
-		
 		dens_target = ma.Density_2(tri)
 		Y = ma.optimized_sampling_2(dens_target,Nshape)
 		nu = np.ones(Nshape) * (mu.mass() / Nshape)
-		return X,mu,Y,nu
-			
-	source = arg[1]
-	target = arg[2]
-	extension_source = os.path.splitext(source)[1]
-	extension_target = os.path.splitext(target)[1]
-
-	if extension_source == ".txt":
-		X = read_data(source)
-		mu = ma.Density_2(X)
-		X = ma.optimized_sampling_2(mu, Nshape, niter=1)
+		
 	else:
-		img,box = read_image(source, 1.)
-		mu = ma.Density_2.from_image(img,box)
-		if Nimg > 10000:
-			X = regular_sampling(img,box)
+		extension_target = os.path.splitext(target)[1]
+
+		if extension_target == ".txt":
+			Y, nu = read_data(target)
+			dens_target = ma.Density_2(Y, nu)
+			nu = nu * (mu.mass() / sum(nu))
+		
 		else:
-			X = ma.optimized_sampling_2(mu, Nimg, niter=1)
-
-	if extension_target == ".txt":
-		Y = read_data(target)
-		dens_target = ma.Density_2(Y)
-		Y = ma.optimized_sampling_2(dens_target, Nshape, niter=2)
-		nu = np.ones(Nshape) * (mu.mass() / Nshape)
-	else:
-		img,box = read_image(target, 1.)
-		dens_target = ma.Density_2.from_image(img,box)
-		if Nimg > 10000:
+			# For a picture, number of dirac equals
+			# number of pixels (set in read_image())
+			img,box = read_image(target, 5.)
+			dens_target = ma.Density_2.from_image(img,box)
 			Y = regular_sampling(img,box)
 			N = len(Y)
 			nu = np.reshape(img,(N))
-			zero = np.zeros(nu.shape)
+			
+			# Null pixels are removed
+			zero = np.zeros(N)
 			J = np.greater(nu,zero)
 			Y = Y[J]
 			nu = nu[J]
+			
 			nu = nu * (mu.mass()/sum(nu))
-		else:
-			Y = ma.optimized_sampling_2(dens_target, Nimg, niter=2)
-			nu = np.ones(Nimg) * (mu.mass() / Nimg)
 
+	print('Number of diracs: ', len(nu))
 	return X, mu, Y, nu
 
 
@@ -132,14 +140,22 @@ def read_data(fn):
 		else:
 			x = []
 			y = []
+			z = []
 			for line in f:
 				data = line.rstrip('\n\r').split("\t")
 				x.append(float(data[0]))
 				y.append(float(data[1]))
+				if len(data) == 3:
+					z.append(float(data[2]))
 				
 			x = np.asarray(x)
 			y = np.asarray(y)
 			
+			if len(data) == 3:
+				z = np.asarray(z)
+			else:
+				z = np.ones(len(x))
+				
 			# Recentering of points around origin		
 			xmax = np.max(x)
 			xmin = np.min(x)
@@ -147,9 +163,9 @@ def read_data(fn):
 			ymin = np.min(y)
 			x = x - xmin - (xmax - xmin) / 2
 			y = y - ymin - (ymax - ymin) / 2
-			X = np.array([x,y]).T	
-
-			return X
+			X = np.array([x,y]).T
+			
+			return X, z
 			
 	except IOError:
 		print ("Error: can\'t find file or read data")
@@ -191,7 +207,7 @@ def read_image(fn, size):
 		
 		ratio = dims[0] / dims[1]
 
-		nlin = 512
+		nlin = 256
 		ncol = int(nlin / ratio)	
 		
 		img = sp.misc.imresize(img, (nlin,ncol))
