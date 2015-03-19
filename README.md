@@ -7,16 +7,23 @@ Dependencies
 ============
 + MongeAmpere/PyMongeAmpere
 + numpy 1.9
-+ pyhull
++ matplotlib 1.4
 + pillow
 + mpi4py (optionnal)
 
 Run the program
 ===============
 ``` sh
-python reflecteur.py [source] [target]
+reflecteur.py [-h] [--s s] [--t t]
+
+optional arguments:
+  -h, --help         show this help message and exit
+  --s s, --source s  source file name
+  --t t, --target t  target file name
+
 ```
-If no argument is given, default is square source send on a triangle target.
+Default source is a uniform square source and
+default target is a uniform triangle with 10000 diracs.
 
 Warning
 =======
@@ -27,7 +34,7 @@ Parallelized version
 ====================
 reflecteurMPI.py is a parallelized version of reflecteur.py. The ray tracing is the only function prallelized, it is useless to use it if you are not concerned by ray tracing. The command to run the program is:
 ``` sh
-mpiexec -n <nbofprocess> python reflecteur.py [source] [target]
+mpiexec -n <nbofprocess> python reflecteur.py [-h] [--s s] [--t t]
 ```
 
 
