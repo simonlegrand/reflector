@@ -14,7 +14,7 @@ Dependencies
 Run the program
 ===============
 ``` sh
-reflecteur.py [-h] [--s s] [--t t]
+python reflecteur.py [-h] [--s s] [--t t]
 ```
 optional arguments:
 ``` sh
@@ -23,7 +23,7 @@ optional arguments:
 --t t, --target t  target file name
 ```
 
-Default source is a uniform square source and
+Default source is a uniform square and
 default target is a uniform triangle with 10000 diracs.
 
 Warning
@@ -31,11 +31,11 @@ Warning
 The algorithm used to solve the semi-discrete Monge-Ampere equation only works
 for a convex density.
 
-Parallelized version
+Parallel version
 ====================
-reflecteurMPI.py is a parallelized version of reflecteur.py. The ray tracing is the only function prallelized, it is useless to use it if you are not concerned by ray tracing. The command to run the program is:
+reflecteurMPI.py is a parallelized version of reflecteur.py. The ray tracing is the only function parallelized, it is useless to run it if you are not concerned by the resimulation of the reflector. The command to run the program is:
 ``` sh
-mpiexec -n <nbofprocess> python reflecteur.py [-h] [--s s] [--t t]
+mpirun -n <nbofprocess> python reflecteur.py [-h] [--s s] [--t t]
 ```
 
 
