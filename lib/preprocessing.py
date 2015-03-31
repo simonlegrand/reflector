@@ -67,13 +67,11 @@ def input_preprocessing(parser):
 		
 		if extension_source == ".txt":
 			X, X_w = read_data(source)
-			#misc.plot_density(X,X_w)
 			mu = ma.Density_2(X, X_w)
 		
 		else:
 			img,box = read_image(source, 1.)
 			mu = ma.Density_2.from_image(img,box)
-			X = regular_sampling(img,box)
 		
 	#### Target processing ####
 	if target == '0':
@@ -97,7 +95,7 @@ def input_preprocessing(parser):
 		else:
 			# For a picture, number of dirac equals
 			# number of pixels (set in read_image())
-			img,box = read_image(target, 5.)
+			img,box = read_image(target, 10.)
 			dens_target = ma.Density_2.from_image(img,box)
 			Y = regular_sampling(img,box)
 			N = len(Y)
@@ -111,8 +109,7 @@ def input_preprocessing(parser):
 			
 			nu = nu * (mu.mass()/sum(nu))
 
-	print('Number of diracs: ', len(nu))
-	return X, mu, Y, nu
+	return mu, Y, nu
 
 
 def read_data(fn):
@@ -205,11 +202,11 @@ def read_image(fn, size):
 		else:
 			img = image
 		
-		ratio = dims[0] / dims[1]
-
-		nlin = 256
-		ncol = int(nlin / ratio)	
+		ratio = float(dims[0]) / dims[1]
 		
+		nlin = 316
+		ncol = int(nlin / ratio)	
+
 		img = sp.misc.imresize(img, (nlin,ncol))
 		img = np.asarray(img, dtype=float)
 		img = img / 255.0
@@ -217,8 +214,6 @@ def read_image(fn, size):
 		ymin = -size / 2.
 
 		box = [xmin,-xmin,-ymin,ymin]
-		#plt.imshow(img)
-		#plt.show()
 		return img, box	 	
 		
 	except IOError:

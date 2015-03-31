@@ -1,3 +1,4 @@
+import sys
 import numpy as np
 import scipy as sp
 import cPickle
@@ -5,7 +6,7 @@ from mpl_toolkits.mplot3d import Axes3D
 from matplotlib import cm
 import matplotlib.pyplot as plt
 
-def write_data(data, filename):
+def write_data1(data, filename):
 	"""
 	Serialize data and write it in a file
 	"""
@@ -15,7 +16,15 @@ def write_data(data, filename):
 	except (NameError, IOError) as e:
 		print(e)
 		sys.exit(1)
-	
+
+def write_data(x, y, u, grad, filename):
+	try:
+		outfile = open(filename,'w')
+
+	except (NameError, IOError) as e:
+		print(e)
+		sys.exit(1)
+
 def load_data(filename):
 	try:
 		infile = open(filename,'r')
@@ -46,10 +55,10 @@ def plot_reflector(I, box):
 	ax.plot_trisurf(grid[:,0], grid[:,1], Z, cmap=cm.jet, linewidth=0.2)
 	plt.show()
 	
-def plot_density(X, mu):
+def plot_density(mu):	
 	fig = plt.figure()
 	ax = fig.gca(projection='3d')
 	#ax.set_zlim3d(0,1.5)
-	ax.plot_trisurf(X[:,0], X[:,1], mu, cmap=cm.jet, linewidth=0.2)
+	ax.plot_trisurf(mu.vertices[:,0], mu.vertices[:,1], mu.values, cmap=cm.jet, linewidth=0.2)
 	plt.show()
 	

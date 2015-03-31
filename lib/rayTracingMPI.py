@@ -50,7 +50,7 @@ def reflection(grid, I, s1):
 	return s2
 
 
-def ray_tracer(comm, s1, density, s_box, t_box, interpol, e_eta, e_ksi, n_plan, niter=None):
+def ray_tracer(comm, s1, density, t_box, interpol, base, niter=None):
 	"""
 	This function computes the simulation of reflection on the reflector
 	and plot the image produced on the target screen.
@@ -60,16 +60,13 @@ def ray_tracer(comm, s1, density, s_box, t_box, interpol, e_eta, e_ksi, n_plan, 
 	comm : MPI communicator
 	s1 : array (N,3)
 		direction of incident rays
-	s_box : tuple[4]
-		enclosing square box of the source support
-		[xmin, xmax, ymin, ymax]
 	t_box : tuple[4]
 		enclosing square box of the target support
 		[ymin, xmax, ymin, ymax]
 	interpol : TriCubic interpolant of the reflector
-	e_eta , e_ksi : Direct orthonormal 
-		basis of the target plan
-	n_plan : Normal vector to the target plan
+	base : [0]e_eta , [1]e_ksi : Direct orthonormal 
+		   basis of the target plan
+		   [2]n_plan : Normal vector to the target plan
 	niter : Number of loops
 	
 	Returns :
@@ -79,18 +76,20 @@ def ray_tracer(comm, s1, density, s_box, t_box, interpol, e_eta, e_ksi, n_plan, 
 	"""
 	rank = comm.Get_rank()
 	size = comm.Get_size()
-
+	
+	e_eta = base[0]
+	e_ksi = base[1]
+	n_plan = base[2]
+	
 	M = None
 	if niter is None:
 		niter = 10
 	for i in xrange(niter):
-		nray = 200000
+		nray = 150000
 		# Generate source point according to
 		# to the source density probability
 		points = density.random_sampling(nray)
-		#x = s_box[0] + np.random.rand(nray) * (s_box[1] - s_box[0])
-		#y = s_box[2] + np.random.rand(nray) * (s_box[3] - s_box[2])
-		#points = np.vstack([x,y]).T
+
 		s2 = reflection(points, interpol, s1)
 
 		##### New spherical coordinates #####
@@ -131,10 +130,10 @@ def ray_tracer(comm, s1, density, s_box, t_box, interpol, e_eta, e_ksi, n_plan, 
 		K = np.logical_and(np.less_equal(ksi,ksi_max),
 						   np.greater_equal(ksi,ksi_min))
 		L = np.logical_and(J,K)
-
+		
 		ksi = ksi[L]
 		eta = eta[L]
-		
+
 		Miter = fill_sparse_matrix(eta, ksi, t_box)
 		if M is None:
 			M = Miter

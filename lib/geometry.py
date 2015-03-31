@@ -481,7 +481,7 @@ def plot_plan(a, b, c, d):
 	plt3d.plot_surface(xx, yy, z)
 	plt.show()
 
-def planar_to_gradient(eta, ksi, s1=None, e_eta=None, e_ksi=None, n=None):
+def planar_to_gradient(eta, ksi, s1=None, base=None):
 	"""
 	This function computes the surface derivatives of the reflector
 	for incident rays s1 and impact points of reflected rays in (eta,ksi)
@@ -497,7 +497,8 @@ def planar_to_gradient(eta, ksi, s1=None, e_eta=None, e_ksi=None, n=None):
 		vector e_ksi of the target plane basis
 	n : (1,3) array
 		unique normal vector of the plane directed
-		toward the origin
+		toward the origin which norm is the distance
+		from plane to origin
 	s1 : (1,3) array
 		Incident ray direction
 
@@ -510,11 +511,15 @@ def planar_to_gradient(eta, ksi, s1=None, e_eta=None, e_ksi=None, n=None):
 	--------
 	Inverse Methods for Illumination Optics, Corien Prins, chapter 5.3.1
     """
-	if e_eta is None or e_ksi is None or n is None:
+	if base is None:
 		# We define an orthonormal basis for the plane
 		e_eta = np.array([0.,-1,0.])
 		e_ksi = np.array([0.,0.,1.])
 		n = np.array([-10.,0.,0.])
+	else:
+		e_eta = base[0]
+		e_ksi =base[1]
+		n = base[2]
 	
 	if s1 is None:
 		s1 = np.array([0.,0.,1.])

@@ -1,0 +1,3 @@
+To run this example:
+
+python reflecteur.py --s examples/gaussianDisk1e4.txt --t examples/cameraman.gif
