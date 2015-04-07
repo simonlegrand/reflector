@@ -6,7 +6,6 @@ sys.path.append('../PyMongeAmpere-build/lib')
 import os.path
 import numpy as np
 import matplotlib.pyplot as plt
-import matplotlib.tri as tri
 from matplotlib import cm
 import scipy as sp
 
@@ -30,15 +29,15 @@ def rgb_to_gray(imcolor):
 	imgray = 0.299*imcolor[:,:,0] + 0.587*imcolor[:,:,1] + 0.114*imcolor[:,:,2]
 	return imgray
 	
-def input_preprocessing(parser):
+def input_preprocessing(parameters):
 	"""
 	Leads to the proper input treatment
 	according to arg.
 	
 	Parameters
 	----------
-	parser : parser object
-		Contains source and target file names
+	parameters : dictionnary
+		Contains all the parameters
 		
 	Returns
 	-------
@@ -46,16 +45,12 @@ def input_preprocessing(parser):
 	mu : Density_2 object
 	Y : 2D array
 	nu : 1D array
-	"""
-	parser.add_argument('--s', '--source', type=str, default='0', help='source file name',metavar='s')
-	parser.add_argument('--t', '--target', type=str, default='0', help='target file name',metavar='t')
-	args = parser.parse_args()
-	
-	source = args.s
-	target = args.t
+	"""	
+	source = parameters['source']
+	target = parameters['target']
 	
 	#### Source processing ####
-	if source == '0':
+	if source == 'default':
 		
 		x = np.array([-0.5,-0.5,0.5,0.5])
 		y = np.array([-0.5,0.5,-0.5,0.5])
@@ -70,19 +65,27 @@ def input_preprocessing(parser):
 			mu = ma.Density_2(X, X_w)
 		
 		else:
-			img,box = read_image(source, 1.)
-			mu = ma.Density_2.from_image(img,box)
+			img,box = read_image(source, parameters['s_size'])
+			# Null pixels are removed
+			X = regular_sampling(img,box)
+			img = np.reshape(img, np.shape(X)[0])
+			zero = np.zeros(np.shape(img))
+			J = np.greater(img,zero)
+			img = img[J]
+			X = X[J]
+			mu = ma.Density_2(X,img)
+			#mu = ma.Density_2.from_image(img,box)
 		
 	#### Target processing ####
-	if target == '0':
+	if target == 'default':
 		# Number of diracs for a shape
-		Nshape = 10000
+		Ndiracs = 10000
 		x = np.array([0.5,-0.25,-0.25])
 		y = np.array([0.,0.433,-0.433])
 		tri = np.array([x,y]).T
 		dens_target = ma.Density_2(tri)
-		Y = ma.optimized_sampling_2(dens_target,Nshape)
-		nu = np.ones(Nshape) * (mu.mass() / Nshape)
+		Y = ma.optimized_sampling_2(dens_target,Ndiracs)
+		nu = np.ones(Ndiracs) * (mu.mass() / Ndiracs)
 		
 	else:
 		extension_target = os.path.splitext(target)[1]
@@ -95,7 +98,7 @@ def input_preprocessing(parser):
 		else:
 			# For a picture, number of dirac equals
 			# number of pixels (set in read_image())
-			img,box = read_image(target, 10.)
+			img,box = read_image(target, parameters['t_size'])
 			dens_target = ma.Density_2.from_image(img,box)
 			Y = regular_sampling(img,box)
 			N = len(Y)
@@ -129,47 +132,53 @@ def read_data(fn):
 	"""
 	try:
 		f = open(fn, "r")
-		header = f.readline().rstrip('\n\r')
 		
-		if header != 'Input file reflector':
-			raise ValueError
+		try:
+			header = f.readline().rstrip('\n\r')
 		
-		else:
-			x = []
-			y = []
-			z = []
-			for line in f:
-				data = line.rstrip('\n\r').split("\t")
-				x.append(float(data[0]))
-				y.append(float(data[1]))
-				if len(data) == 3:
-					z.append(float(data[2]))
-				
-			x = np.asarray(x)
-			y = np.asarray(y)
-			
-			if len(data) == 3:
-				z = np.asarray(z)
+			if header != 'Reflector input file':
+				raise ValueError
+		
 			else:
-				z = np.ones(len(x))
+				x = []
+				y = []
+				z = []
+				for line in f:
+					data = line.rstrip('\n\r').split("\t")
+					x.append(float(data[0]))
+					y.append(float(data[1]))
+					if len(data) == 3:
+						z.append(float(data[2]))
 				
-			# Recentering of points around origin		
-			xmax = np.max(x)
-			xmin = np.min(x)
-			ymax = np.max(y)
-			ymin = np.min(y)
-			x = x - xmin - (xmax - xmin) / 2
-			y = y - ymin - (ymax - ymin) / 2
-			X = np.array([x,y]).T
+				x = np.asarray(x)
+				y = np.asarray(y)
 			
-			return X, z
+				if len(data) == 3:
+					z = np.asarray(z)
+				else:
+					z = np.ones(len(x))
+				
+				# Recentering of points around origin		
+				xmax = np.max(x)
+				xmin = np.min(x)
+				ymax = np.max(y)
+				ymin = np.min(y)
+				x = x - xmin - (xmax - xmin) / 2
+				y = y - ymin - (ymax - ymin) / 2
+				X = np.array([x,y]).T
+			
+				return X, z
+				
+		finally:
+			f.close()
 			
 	except IOError:
-		print ("Error: can\'t find file or read data")
+		print ("Error: can\'t find", fn)
+		sys.exit()
+		
 	except ValueError:
-		print ("Error: wrong data type in the file")
-	finally:
-		f.close()
+		print ("Error: wrong data type in", fn)
+		sys.exit()
 
 def read_image(fn, size):
 	"""
@@ -192,18 +201,19 @@ def read_image(fn, size):
 	"""
 	try:
 		image = sp.misc.imread(fn)
+
 		dims = np.shape(image)
 		if len(dims) == 3:
 			img = rgb_to_gray(image)
 
 		elif len(dims) != 2:
 			raise ValueError
-		
+
 		else:
 			img = image
-		
+
 		ratio = float(dims[0]) / dims[1]
-		
+
 		nlin = 316
 		ncol = int(nlin / ratio)	
 
@@ -214,59 +224,11 @@ def read_image(fn, size):
 		ymin = -size / 2.
 
 		box = [xmin,-xmin,-ymin,ymin]
-		return img, box	 	
-		
+		return img, box
+	
 	except IOError:
-		print ("Error: can\'t find file or read data")
-	except ValueError:
-		print ("Error: wrong data type in the file")
-		
-		
-def eval_legendre_fenchel(mu, Y, psi):
-	"""
-	This function returns centers of laguerre cells Z,
-	the delaunay triangulation of these points and the 
-	Legendre-Fenchel transform of psi.
-	
-	Parameters
-	----------
-	mu : Density_2 object
-		Density of X ensemble
-	Y : 2D array
-		Points on the Y ensemble
-	psi : 1D array
-		Functionnal values on Y
-			
-	Returns
-	-------
-	Z : 2D array
-		Laguerre cells centers coordinates
-	T : delaunay_2 object
-		Weighted Delaunay triangulation of Z
-	psi_star_tilde : 1D array
-		Legendre-Fenchel transform of psi
-	"""
-	# on trouve un point dans chaque cellule de Laguerre
-	Z = mu.lloyd(Y,psi)[0]
-	
-	# par definition, psi^*(z) = min_{y\in Y} |y - z|^2 - psi_y
-	# Comme Z[i] est dans la cellule de Laguerre de Y[i], la formule se simplifie:
-	psi_star = np.square(Y[:,0] - Z[:,0]) + np.square(Y[:,1] - Z[:,1]) - psi
-	T = ma.delaunay_2(Z, psi_star)
-	
-	# ensuite, on modifie pour retrouver une fonction convexe \tilde{psi^*} telle
-	# que \grad \tilde{\psi^*}(z) = y si z \in Lag_Y^\psi(y)
-	psi_star_tilde = (np.square(Z[:,0]) + np.square(Z[:,1]))/2 - psi_star/2
-	return Z,T,psi_star_tilde
-	
-def make_cubic_interpolator(Z,T,psi,grad):
-	"""
-	This function returns a cubic interpolant
-	of function psi.
-	"""
-	T = tri.Triangulation(Z[:,0],Z[:,1],T)
-	interpol = tri.CubicTriInterpolator(T, psi, kind='user', dz=(grad[:,0],grad[:,1]))
-	return interpol	
+		print ("Error: can\'t find", fn)
+		sys.exit()
 	
 def regular_sampling(img,box):
 	"""

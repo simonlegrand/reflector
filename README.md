@@ -14,13 +14,12 @@ Dependencies
 Run the program
 ===============
 ``` sh
-python reflecteur.py [-h] [--s s] [--t t]
+python reflecteur.py [-h] [--f f]
 ```
 optional arguments:
 ``` sh
 -h, --help         show this help message and exit
---s s, --source s  source file name
---t t, --target t  target file name
+--f f, --file f	   parameter file
 ```
 
 Default source is a uniform square and
@@ -35,7 +34,7 @@ Parallel version
 ====================
 reflecteurMPI.py is a parallelized version of reflecteur.py. The ray tracing is the only function parallelized, it is useless to run it if you are not concerned by the resimulation of the reflector. The command to run the program is:
 ``` sh
-mpirun -n <nbofprocess> python reflecteur.py [-h] [--s s] [--t t]
+mpirun -n <nbofprocess> python reflecteur.py [-h] [--f f]
 ```
 
 
