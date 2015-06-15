@@ -34,7 +34,7 @@ Parallel version
 ====================
 reflecteurMPI.py is a parallelized version of reflecteur.py. The ray tracing is the only function parallelized, it is useless to run it if you are not concerned by the resimulation of the reflector. The command to run the program is:
 ``` sh
-mpirun -n <nbofprocess> python reflecteur.py [-h] [--f f]
+mpirun -n <nbofprocess> python reflecteurMPI.py [-h] [--f f]
 ```
 
 
