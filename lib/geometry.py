@@ -25,7 +25,7 @@ class NotProperShapeError(GeometricError):
 	"""Raised when inputs have not the proper shape"""
 	pass
 
-def barycentre(pts, w):
+def barycentre(pts, w=None):
 	"""
 	Computes the barycentre of points cloud pts
 	affected with w weights, in a space of arbitrary
@@ -44,9 +44,10 @@ def barycentre(pts, w):
 		Coordinates of barycentre
 	"""
 	try:
-		pts = np.asarray(pts, dtype=np.float64)
-		w = np.asarray(w, dtype=np.float64)
-
+	
+		if w is None:
+			w = np.ones(len(pts))
+			
 		if pts.shape[0] != w.shape[0]:
 			raise NotProperShapeError("Pts and w must have the same length.")
 				
@@ -264,63 +265,6 @@ def spherical_to_gradient(theta,phi):
 	except NotProperShapeError, arg:
 		print("****spherical_to_gradient error: ", arg.msg)
 		
-def planar_to_spherical_backup(eta,ksi,theta_0,phi_0,d):
-	"""
-	This function computes to conversion from planar coordinates
-	(eta, ksi) to spherical coordinates (theta, phi) on the unit sphere
-	for the reflector problem.
-	
-	Parameters
-	----------
-	eta : 1D array
-		Forms an orthonormal basis with ksi and the 
-		normal vector of the plane directed to 
-		the center of unit sphere
-	ksi : 1D array
-		Coordinate along ksi axis parallel to z axis
-	theta_0 : real
-		Coordinate theta of the plane origin
-	phi_0 : real
-		Coordinate phi of the plane origin	
-	d : Distance from the plane origin to the center
-		of unit sphere
-		
-	Returns
-	-------
-	theta : 1D array
-		Inclination angles (with respect to the
-		positiv z axis). 0 <= theta <= pi
-	phi : 1D array
-		Azimuthal angles (projection of a direction
-		in z=0 plane with respect to the x axis).
-		-pi/2 <= phi <= pi/2
-		
-	See Also
-	--------
-	Inverse Methods for Illumination Optics, Corien Prins
-	"""
-	try:
-		eta = np.asarray(eta, dtype=np.float64)
-		ksi = np.asarray(ksi, dtype=np.float64)
-		
-		if len(ksi.shape) > 1 or len(eta.shape) > 1:
-			raise NotProperShapeError("ksi and eta must be 1D arrays.")
-		
-		if ksi.shape != eta.shape:
-			raise NotProperShapeError("ksi and eta must have the same length.")
-			
-		phi = phi_0 - np.arctan(eta/d)
-		theta = theta_0 - np.arctan(ksi*np.cos(phi_0-phi)/d)
-		r = d / (np.cos(theta_0-theta) * np.cos(phi_0-phi))
-		
-		return r,theta,phi
-			
-	except FloatingPointError:
-		print("****planar_to_spherical error: division by zero.")
-		
-	except NotProperShapeError, arg:
-		print("****planar_to_spherical error: ", arg.msg)
-
 def planar_to_spherical(eta,ksi,theta_0,phi_0,d):
 	"""
 	This function computes to conversion from planar coordinates
@@ -481,7 +425,7 @@ def plot_plan(a, b, c, d):
 	plt3d.plot_surface(xx, yy, z)
 	plt.show()
 
-def planar_to_gradient(eta, ksi, s1=None, base=None):
+def planar_to_gradient(eta, ksi, base, s1=None):
 	"""
 	This function computes the surface derivatives of the reflector
 	for incident rays s1 and impact points of reflected rays in (eta,ksi)
@@ -491,14 +435,10 @@ def planar_to_gradient(eta, ksi, s1=None, base=None):
 		Coordinate eta on the target plane
 	ksi : 1D array
 		Coordinate ksi on the target plane
-	e_eta : (1,3) array
-		vector e_eta of the target plane basis
-	e_ksi : (1,3) array
-		vector e_ksi of the target plane basis
-	n : (1,3) array
-		unique normal vector of the plane directed
-		toward the origin which norm is the distance
-		from plane to origin
+	base : [0]e_eta , [1]e_ksi : Direct orthonormal 
+		   basis of the target plan
+		   [2]n_plan : Normal vector to the target plan
+		   Its norm equals distance from plan to reflector.
 	s1 : (1,3) array
 		Incident ray direction
 
@@ -511,36 +451,30 @@ def planar_to_gradient(eta, ksi, s1=None, base=None):
 	--------
 	Inverse Methods for Illumination Optics, Corien Prins, chapter 5.3.1
     """
-	if base is None:
-		# We define an orthogonal basis for the plane
-		e_eta = np.array([0.,-1,0.])
-		e_ksi = np.array([0.,0.,1.])
-		n = np.array([-10.,0.,0.])
-	else:
-		e_eta = base[0]
-		e_ksi =base[1]
-		n = base[2]
+	e_eta = base[0]
+	e_ksi =base[1]
+	n = base[2]
 	
 	if s1 is None:
 		s1 = np.array([0.,0.,1.])
-	try:	
+	else:
+		s1 = s1 / np.linalg.norm(s1)
+	try:
+		# Distance target plan/reflector
 		d = np.linalg.norm(n)
 		if d==0:
 			raise ZeroDivisionError
 		n = n / d
 	
-		s1 = s1 / np.linalg.norm(s1)
-	
 		# Reflected rays
+		# The reflector is considered ponctual and
+		# as the origin of the coordinate system
 		s2 = np.zeros((len(eta),3))
 		s2[:,0] = eta*e_eta[0] + ksi*e_ksi[0] - d*n[0]
 		s2[:,1] = eta*e_eta[1] + ksi*e_ksi[1] - d*n[1]
 		s2[:,2] = eta*e_eta[2] + ksi*e_ksi[2] - d*n[2]
 	
-		#print(s2)
-		#print(np.linalg.norm(s2, axis=1)[:, np.newaxis])
 		s2 = s2 / np.linalg.norm(s2, axis=1)[:, np.newaxis]
-		#print(s2)
 	
 		p = -(s2[:,0] - s1[0])/(s2[:,2] - s1[2])
 		q = -(s2[:,1] - s1[1])/(s2[:,2] - s1[2])

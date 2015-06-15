@@ -133,7 +133,7 @@ def ray_tracer(s1, density, t_box, interpol, base, niter=None):
 		else:
 			M += Miter
 	
-		print((i+1)*nray," rays thrown")
+		print("it", i,":", (i+1)*nray,"rays thrown")
 	M = 255.0*M/np.amax(M)
 		    
 	return M
@@ -144,7 +144,7 @@ def fill_sparse_matrix(x,y,box):
 	w = box[1] - box[0]
 	h = box[3] - box[2]
 	ratio = h / w
-	n_linepix = 512
+	n_linepix = 256
 	n_columnpix = int(n_linepix / ratio)
 	
 	nmesh = len(x)

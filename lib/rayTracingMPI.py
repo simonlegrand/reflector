@@ -1,4 +1,5 @@
 """ Module containing functions for the ray tracer"""
+from __future__ import print_function
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -85,7 +86,7 @@ def ray_tracer(comm, s1, density, t_box, interpol, base, niter=None):
 	if niter is None:
 		niter = 10
 	for i in xrange(niter):
-		nray = 150000
+		nray = 100000
 		# Generate source point according to
 		# to the source density probability
 		points = density.random_sampling(nray)
@@ -141,7 +142,7 @@ def ray_tracer(comm, s1, density, t_box, interpol, base, niter=None):
 			M += Miter
 		
 		if rank == 0:
-			print(size*(i+1)*nray," rays thrown")
+			print("it",i,":",size*(i+1)*nray,"rays thrown")
 		
 	return M
 	
@@ -152,7 +153,7 @@ def fill_sparse_matrix(x,y,box):
 	w = box[1] - box[0]
 	h = box[3] - box[2]
 	ratio = h / w
-	n_linepix = 512
+	n_linepix = 256
 	n_columnpix = int(n_linepix / ratio)
 	
 	nmesh = len(x)

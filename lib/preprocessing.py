@@ -31,8 +31,9 @@ def rgb_to_gray(imcolor):
 	
 def input_preprocessing(parameters):
 	"""
-	Leads to the proper input treatment
-	according to arg.
+	Generates proper inputs according to
+	parameters. A density for the source
+	and a diracs sum for the target.
 	
 	Parameters
 	----------
@@ -41,7 +42,6 @@ def input_preprocessing(parameters):
 		
 	Returns
 	-------
-	X : 2D array
 	mu : Density_2 object
 	Y : 2D array
 	nu : 1D array
@@ -80,8 +80,10 @@ def input_preprocessing(parameters):
 	if target == 'default':
 		# Number of diracs for a shape
 		Ndiracs = 10000
-		x = np.array([0.5,-0.25,-0.25])
-		y = np.array([0.,0.433,-0.433])
+		#x = np.array([0.5,-0.25,-0.25])
+		#y = np.array([0.,0.433,-0.433])
+		x = np.array([0.,-1.,-0.75, 0.75, 1.])
+		y = np.array([1.5,0.25,-0.5, -0.5, 0.25])
 		tri = np.array([x,y]).T
 		dens_target = ma.Density_2(tri)
 		Y = ma.optimized_sampling_2(dens_target,Ndiracs)
@@ -92,14 +94,12 @@ def input_preprocessing(parameters):
 
 		if extension_target == ".txt":
 			Y, nu = read_data(target)
-			dens_target = ma.Density_2(Y, nu)
 			nu = nu * (mu.mass() / sum(nu))
 		
 		else:
 			# For a picture, number of dirac equals
 			# number of pixels (set in read_image())
 			img,box = read_image(target, parameters['t_size'])
-			dens_target = ma.Density_2.from_image(img,box)
 			Y = regular_sampling(img,box)
 			N = len(Y)
 			nu = np.reshape(img,(N))
@@ -110,6 +110,7 @@ def input_preprocessing(parameters):
 			Y = Y[J]
 			nu = nu[J]
 			
+			# Mass equalization
 			nu = nu * (mu.mass()/sum(nu))
 
 	return mu, Y, nu
@@ -129,12 +130,14 @@ def read_data(fn):
 	-------
 	X : 2D array
 		Points coordinates of the polygon
+	z : 1D array
+		Weights associated to points X
 	"""
 	try:
-		f = open(fn, "r")
+		infile = open(fn, "r")
 		
 		try:
-			header = f.readline().rstrip('\n\r')
+			header = infile.readline().rstrip('\n\r')
 		
 			if header != 'Reflector input file':
 				raise ValueError
@@ -143,7 +146,7 @@ def read_data(fn):
 				x = []
 				y = []
 				z = []
-				for line in f:
+				for line in infile:
 					data = line.rstrip('\n\r').split("\t")
 					x.append(float(data[0]))
 					y.append(float(data[1]))
@@ -158,19 +161,12 @@ def read_data(fn):
 				else:
 					z = np.ones(len(x))
 				
-				# Recentering of points around origin		
-				xmax = np.max(x)
-				xmin = np.min(x)
-				ymax = np.max(y)
-				ymin = np.min(y)
-				x = x - xmin - (xmax - xmin) / 2
-				y = y - ymin - (ymax - ymin) / 2
 				X = np.array([x,y]).T
 			
 				return X, z
 				
 		finally:
-			f.close()
+			infile.close()
 			
 	except IOError:
 		print ("Error: can\'t find", fn)
@@ -214,7 +210,7 @@ def read_image(fn, size):
 
 		ratio = float(dims[0]) / dims[1]
 
-		nlin = 316
+		nlin = 128
 		ncol = int(nlin / ratio)	
 
 		img = sp.misc.imresize(img, (nlin,ncol))
@@ -244,3 +240,100 @@ def regular_sampling(img,box):
 	y = np.reshape(y,(Nx))
 	X = np.vstack([x,y]).T
 	return X
+	
+def init_parameters(parser):
+	"""
+	Initialise parameters of the problem according
+	to a parameter file or by default if none
+	is provided.
+	
+	Parameters
+	----------
+	parser : parser object
+		Contains the parameter file name.
+		
+	Returns
+	-------
+	param : dictionnary
+		Contains source and target files name,
+		target base coordinates and source and
+		target dimension.
+	"""
+	parser.add_argument('--f', '--file', type=str, default='0', help='parameter file', metavar='f')
+	args = parser.parse_args()
+	
+	param = {}
+	#### Default source and target ####
+	param['source'] = 'default'
+	param['target'] = 'default'
+	#### Default target plan base ####
+	param['e_eta'] = [1.,0.,0.]
+	param['e_ksi'] = [0.,0.,1.]
+	param['n_plan'] = [0.,-10.,0.]
+	#### Default source and target size ####
+	# Useful only for pictures, because points
+	# coordinates are already set by the input
+	# file if any is given.
+	# The size is given by the largest dimension
+	# of the picture, proportions are then conserved.
+	param['s_size'] = 1.
+	param['t_size'] = 10.
+	
+	# If a parameter file is given
+	if args.f != '0':
+		infile = None
+		try:
+			infile = open(args.f, "r")
+			
+			try:
+				header = infile.readline().rstrip('\n\r')
+		
+				if header != 'Reflector parameter file':
+					raise ValueError
+				
+				else:
+					# Parameters contained in the file
+					# will erase the default ones. The
+					# others will remain by default.
+					for line in infile:
+						data = line.rstrip('\n\r').split("\t")
+						if data[0] in param:
+							param[data[0]] = data[1:]
+				
+					e_eta = np.array([float(x) for x in param['e_eta']])
+					e_ksi = np.array([float(x) for x in param['e_ksi']])
+					n_plan = np.array([float(x) for x in param['n_plan']])
+					param['s_size'] = float(param['s_size'][0])
+					param['t_size'] = float(param['t_size'][0])
+					if param['source'] != 'default':
+						param['source'] = str(param['source'][0])
+					if param['target'] != 'default':
+						param['target'] = str(param['target'][0])
+				
+					# Assert the base is orthogonal and 
+					# normalize e_eta and e_ksi
+					assert(np.dot(e_eta,e_ksi)==0.)
+					cross_prod = np.cross(np.cross(e_eta,e_ksi),n_plan)
+					assert(np.allclose(cross_prod,np.zeros(3)))
+					e_eta /= np.linalg.norm(e_eta)
+					e_ksi /= np.linalg.norm(e_ksi)
+					param['e_eta'] = e_eta
+					param['e_ksi'] = e_ksi
+					param['n_plan'] = n_plan
+
+			finally:
+				infile.close()
+				
+		except IOError:
+			print ("Error: can\'t find file or read data")
+			sys.exit()
+			
+		except ValueError:
+			print ("Error: wrong data type in the file")
+			sys.exit()
+	
+	return param
+	
+def display_parameters(param):
+	for keys in param:
+		print(keys,' : ', param[keys])

@@ -29,9 +29,9 @@ debut = time.clock()
 
 #### Parameters initialization ####
 parser = argparse.ArgumentParser()
-param = misc.init_parameters(parser)
+param = init_parameters(parser)
 if rank == 0:
-	misc.display_parameters(param)
+	display_parameters(param)
 # Target base
 target_base = [param['e_eta'],param['e_ksi'],param['n_plan']] 
 #Source rays direction
@@ -41,7 +41,7 @@ s1 = np.array([0.,0.,1.])
 mu, Y, nu = input_preprocessing(param)
 comm.Bcast([Y, mpi.DOUBLE],0)
 comm.Bcast([nu, mpi.DOUBLE],0)
-gradx, grady = geo.planar_to_gradient(Y[:,0], Y[:,1], s1, target_base)
+gradx, grady = geo.planar_to_gradient(Y[:,0], Y[:,1], target_base, s1)
 grad = np.vstack([gradx,grady]).T
 
 ##### Optimal Transport problem resolution #####
@@ -62,15 +62,16 @@ if rank == 0:
 comm.Bcast([psi, mpi.DOUBLE],0)
 
 Z,T_Z,psi_Z = misc.eval_legendre_fenchel(mu, grad, psi)
+psi_Z = misc.introduce_error(psi_Z, 0.001)
 interpol = misc.make_cubic_interpolator(Z,T_Z,psi_Z,grad=grad)
 
 source_box = [np.min(Z[:,0]), np.max(Z[:,0]), np.min(Z[:,1]), np.max(Z[:,1])]
 target_box = [np.min(Y[:,0]), np.max(Y[:,0]), np.min(Y[:,1]), np.max(Y[:,1])]
-if rank == 0:
-	misc.plot_reflector(interpol,source_box)
+#if rank == 0:
+#	misc.plot_reflector(interpol,source_box)
 	
 ##### Ray tracing #####
-M = ray.ray_tracer(comm, s1, mu, target_box, interpol, target_base, niter=4)
+M = ray.ray_tracer(comm, s1, mu, target_box, interpol, target_base, niter=100)
 Mrecv = np.zeros((M.shape[0],M.shape[1]))
 
 comm.Reduce([M,mpi.DOUBLE],[Mrecv,mpi.DOUBLE],op=mpi.SUM,root=0)
