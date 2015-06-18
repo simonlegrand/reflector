@@ -55,6 +55,7 @@ Z,T_Z,psi_Z = misc.eval_legendre_fenchel(mu, grad, psi)
 interpol = misc.make_cubic_interpolator(Z, T_Z, psi_Z, grad=grad)
 
 ##### Export of the reflector in .off and .ioff files #####
+points = np.array([Z[:,0],Z[:,1],psi_Z]).T
 #export.export_improved_off('square_cameraman1e2.ioff', points, grad, T_Z)
 export.export_off('square_monge_1e6.off', points, T_Z)
 export.export_off('square_monge_1e6_horiz.off', points, T_Z, rot=True, param=param)
