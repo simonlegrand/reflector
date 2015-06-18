@@ -12,6 +12,8 @@ sys.path.append('../PyMongeAmpere-build/lib')
 sys.path.append('./lib')
 
 import numpy as np
+import MongeAmpere as ma
+import geometry as geo
 
 def write_header(outfile,numVertices,numFaces,numEdges=None):
 	"""
@@ -72,11 +74,18 @@ def write_polygon(outfile, polygon):
 		outfile.write(data)
 		
 		
-def export_off(filename, points, polygon):
+def export_off(filename, pts, polygon, rot=False, param=None):
+
+	if rot:
+		if param is None:
+			print("No parameters for the rotation.")
+		else:
+			pts = geo.rotation(pts, param)
+
 	try:
 		outfile = open(filename,'w')
-		write_header(outfile, len(points), len(polygon))
-		write_points(outfile,points)
+		write_header(outfile, len(pts), len(polygon))
+		write_points(outfile,pts)
 		write_polygon(outfile,polygon)
 	except (NameError, IOError) as e:
 		print(e)

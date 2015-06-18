@@ -56,6 +56,13 @@ def plot_reflector(I, box):
 	ax.plot_trisurf(grid[:,0], grid[:,1], u, cmap=cm.jet, linewidth=0.2)
 	plt.show()
 
+
+def plot_2d_points(x,y):
+	fig = plt.figure()
+	ax = plt.scatter(x,y)
+	plt.show()
+	
+	
 def save_reflector(I, box, filename):
 	"""
 	Write a function and its gradient

@@ -483,3 +483,24 @@ def planar_to_gradient(eta, ksi, base, s1=None):
 		
 	except ZeroDivisionError:
 		print("****planar_to_gradient error")
+
+	
+def rotation(pts, param):
+	"""
+	Rotate the reflector so as to place
+	the concave face upwards.
+	"""
+	s1 = np.array([0,0,1])
+	n = param['n_plan']/np.linalg.norm(param['n_plan'])
+	
+	axis = param['e_eta']
+	angle = np.pi - np.arccos(np.dot(s1,n))/2
+
+	I = np.identity(3)
+	Q = np.matrix([[0,-axis[2],axis[1]],
+					[axis[2],0,-axis[0]],
+					[-axis[1],axis[0],0]])
+	R = I + np.sin(angle)*Q + (1-np.cos(angle))*Q.dot(Q)
+	for i in range(len(pts)):
+		pts[i] = np.dot(R,pts[i])
+	return pts

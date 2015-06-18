@@ -210,16 +210,19 @@ def read_image(fn, size):
 
 		ratio = float(dims[0]) / dims[1]
 
-		nlin = 128
+		nlin = 100
 		ncol = int(nlin / ratio)	
 
 		img = sp.misc.imresize(img, (nlin,ncol))
+		#img = sp.misc.imrotate(img,-90)	# Optionnal
 		img = np.asarray(img, dtype=float)
 		img = img / 255.0
+		
+		# Center the image
 		xmin = -(size / ratio) / 2.
 		ymin = -size / 2.
-
 		box = [xmin,-xmin,-ymin,ymin]
+		
 		return img, box
 	
 	except IOError:
@@ -311,7 +314,7 @@ def init_parameters(parser):
 						param['target'] = str(param['target'][0])
 				
 					# Assert the base is orthogonal and 
-					# normalize e_eta and e_ksi
+					# normalize e_eta e_ksi
 					assert(np.dot(e_eta,e_ksi)==0.)
 					cross_prod = np.cross(np.cross(e_eta,e_ksi),n_plan)
 					assert(np.allclose(cross_prod,np.zeros(3)))
