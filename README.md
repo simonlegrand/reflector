@@ -11,6 +11,14 @@ Dependencies
 + pillow
 + mpi4py (optionnal)
 
+Dependencies installation
+-------------------------
+numpy, matplotlib, pillow and mpi4py are available via the python package manager pip:
+``` sh
+sudo pip install numpy matplotlib pillow mpi4py
+```
+For MongeAmpere et PyMongeAmpere, follow the instructions [here](https://github.com/mrgt/PyMongeAmpere/wiki)
+
 Run the program
 ===============
 ``` sh
