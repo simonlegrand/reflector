@@ -1,6 +1,6 @@
 Reflector
 ====================
-This program is designed to compute the shape of a reflector surface which transform a given beam of light
+This program is designed to compute the shape of a reflector surface which transforms a given beam of light
 into a specified output intensity.
 
 Dependencies
