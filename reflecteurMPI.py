@@ -36,7 +36,7 @@ param = init_parameters(parser)
 if rank == 0:
 	display_parameters(param)
 # Target base
-target_base = [param['e_eta'],param['e_ksi'],param['n_plan']] 
+target_base = [param['e_eta'],param['e_xi'],param['n_plan']] 
 #Source rays direction
 s1 = np.array([0.,0.,1.])
 
