@@ -36,7 +36,7 @@ default target is a uniform triangle with 10000 diracs.
 Warning
 =======
 The algorithm used to solve the semi-discrete Monge-Ampere equation only works
-for a convex density.
+for a convex source density.
 
 Parallel version
 ====================
