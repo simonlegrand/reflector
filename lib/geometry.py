@@ -6,6 +6,7 @@ from __future__ import print_function
 import sys
 
 import numpy as np
+import numpy.matlib
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -25,45 +26,7 @@ class NotProperShapeError(GeometricError):
 	"""Raised when inputs have not the proper shape"""
 	pass
 
-def barycentre(pts, w=None):
-	"""
-	Computes the barycentre of points cloud pts
-	affected with w weights, in a space of arbitrary
-	dimension dim.
-	
-	Parameters
-	----------
-	pts : array (N,dim)
-		Cloud of points
-	w : 1D array (N,)
-		Weights associated to pts
-		
-	Returns
-	-------
-	bary : array (dim,)
-		Coordinates of barycentre
-	"""
-	try:
-	
-		if w is None:
-			w = np.ones(len(pts))
-			
-		if pts.shape[0] != w.shape[0]:
-			raise NotProperShapeError("Pts and w must have the same length.")
-				
-		if pts.shape[0] == 1:
-			print ("barycentre warning: Only one point.")
-			return pts
-		
-		dim = pts.shape[1]
-		bary = np.zeros(dim)
-		for i in range(dim):
-			bary[i] = np.sum(w * pts[:,i])/np.sum(w)
-		return bary
-			
-	except NotProperShapeError, arg:
-		print("****barycentre error: ", arg.msg)
-		
+
 def distance_point_line(m, n, pt):
 	"""
 	Computes the distance between the line generated 
@@ -121,7 +84,7 @@ def furthest_point(cloud, a):
 	----------
 	cloud : (N,dim) array
 		Point cloud
-	a : (,dim) array
+	a : (dim,) array
 		Point
 	
 	Returns
@@ -130,9 +93,6 @@ def furthest_point(cloud, a):
 		distance between a and the furthest point in cloud.
 	"""
 	try:
-		a = np.asarray(a, dtype=np.float64)
-		cloud = np.asarray(cloud, dtype=np.float64)
-		
 		if len(a.shape) > 1:
 			raise NotProperShapeError("a must be a point")
 			
@@ -144,10 +104,7 @@ def furthest_point(cloud, a):
 			return cloud
 
 		N = np.shape(cloud)[0]
-		dim = np.shape(cloud)[1]
-		tmp = np.ones((N, dim))	# Avoids the use of a for loop over nbPts
-		for i in range(dim):
-			tmp[:,i] = tmp[:,i]*a[i]
+		tmp = np.matlib.matrep(a,N,1)
 		dist = np.linalg.norm(tmp-cloud, axis=1)
 		return np.max(dist)
 		
@@ -183,9 +140,6 @@ def gradient_to_spherical(gx,gy):
 	Inverse Methods for Illumination Optics, Corien Prins
 	"""
 	try:
-		gx = np.asarray(gx, dtype=np.float64)
-		gy = np.asarray(gy, dtype=np.float64)
-		
 		if len(gx.shape) > 1 or len(gy.shape) > 1:
 			raise NotProperShapeError("gx and gy must be 1D arrays.")
 		
@@ -245,9 +199,6 @@ def spherical_to_gradient(theta,phi):
 	Inverse Methods for Illumination Optics, Corien Prins
 	"""
 	try:
-		theta = np.asarray(theta, dtype=np.float64)
-		phi = np.asarray(phi, dtype=np.float64)
-		
 		if len(theta.shape) > 1 or len(phi.shape) > 1:
 			raise NotProperShapeError("theta and phi must be 1D arrays.")
 		
@@ -264,6 +215,7 @@ def spherical_to_gradient(theta,phi):
 		
 	except NotProperShapeError, arg:
 		print("****spherical_to_gradient error: ", arg.msg)
+
 		
 def planar_to_spherical(eta,ksi,theta_0,phi_0,d):
 	"""
@@ -330,6 +282,7 @@ def planar_to_spherical(eta,ksi,theta_0,phi_0,d):
 	except NotProperShapeError, arg:
 		print("****planar_to_spherical error: ", arg.msg)
 
+
 def spherical_to_cartesian(r, theta, phi):
 	"""
     This function transforms spherical coordinates r, theta, phi,
@@ -368,6 +321,7 @@ def spherical_to_cartesian(r, theta, phi):
 
 	except NotProperShapeError, arg:
 		print("****spherical_to_cartesian error: ", arg.msg)
+
 
 def plan_cartesian_equation(theta_0, phi_0, d):
 	"""
@@ -411,6 +365,7 @@ def plan_cartesian_equation(theta_0, phi_0, d):
 	d = -(plan_origin_cart[0] * a + plan_origin_cart[1] * b + plan_origin_cart[2] * c) 
 	
 	return a,b,c,d
+
 	
 def plot_plan(a, b, c, d):
 	# plane equation is a*x+b*y+c*z+d=0
@@ -424,6 +379,7 @@ def plot_plan(a, b, c, d):
 	plt3d = plt.figure().gca(projection='3d')
 	plt3d.plot_surface(xx, yy, z)
 	plt.show()
+
 
 def planar_to_gradient(eta, ksi, base, s1=None):
 	"""
@@ -485,7 +441,7 @@ def planar_to_gradient(eta, ksi, base, s1=None):
 		print("****planar_to_gradient error")
 
 	
-def rotation(pts, param):
+def reflector_rotation(pts, param):
 	"""
 	Rotate the reflector so as to place
 	the concave face upwards.

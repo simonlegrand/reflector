@@ -98,6 +98,7 @@ def plot_density(mu):
 	#ax.set_zlim3d(0,1.5)
 	ax.plot_trisurf(mu.vertices[:,0], mu.vertices[:,1], mu.values, cmap=cm.jet, linewidth=0.2)
 	plt.show()
+	
 
 def eval_legendre_fenchel(mu, Y, psi):
 	"""
@@ -126,15 +127,33 @@ def eval_legendre_fenchel(mu, Y, psi):
 	# We find the center of each Laguerre cell
 	# or their projection on the boundary for the cells that 
 	# intersect the boundary
+	#Z = mu.lloyd(Y,psi)[0]
 	X = mu.vertices
 	hull = ConvexHull(X)
 	points = X[hull.vertices]
+	
 	Z = ma.ma.conforming_lloyd_2(mu,Y,psi,points)[0]
 	
 	# By definition, psi^*(z) = min_{y\in Y} |y - z|^2 - psi_y
 	# As Z[i] is in the Laguerre cell of Y[i], the formula can be simplified:
 	psi_star = np.square(Y[:,0] - Z[:,0]) + np.square(Y[:,1] - Z[:,1]) - psi
 	T = ma.delaunay_2(Z, psi_star)
+	
+	# We remove parasite triangles by checking the determinant
+	det = np.zeros(len(T))
+	i = 0
+	T_tmp = []
+	for triangle in T:
+		A = Z[triangle[0]]
+		B = Z[triangle[1]]
+		C = Z[triangle[2]]
+		AB = B-A
+		BC = C-B
+		det[i] = AB[0]*BC[1] - AB[1]*BC[0]
+		if det[i] > 1e-10:
+			T_tmp.append(triangle)
+		i += 1
+	T = np.array(T_tmp)
 	
 	# Modification to get a convex function \tilde{psi^*} such
 	# that \grad \tilde{\psi^*}(z) = y if z \in Lag_Y^\psi(y)
@@ -149,4 +168,5 @@ def make_cubic_interpolator(Z,T,psi,grad):
 	"""
 	T = tri.Triangulation(Z[:,0],Z[:,1],T)
 	interpol = tri.CubicTriInterpolator(T, psi, kind='user', dz=(grad[:,0],grad[:,1]))
+	#interpol = tri.LinearTriInterpolator(T, psi)
 	return interpol

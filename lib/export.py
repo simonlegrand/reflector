@@ -80,7 +80,7 @@ def export_off(filename, pts, polygon, rot=False, param=None):
 		if param is None:
 			print("No parameters for the rotation.")
 		else:
-			pts = geo.rotation(pts, param)
+			pts = geo.reflector_rotation(pts, param)
 
 	try:
 		outfile = open(filename,'w')

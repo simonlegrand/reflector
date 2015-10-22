@@ -1,4 +1,5 @@
 """ Module containing functions for the ray tracer"""
+from __future__ import print_function
 import sys
 import numpy as np
 import scipy.sparse as sparse
@@ -79,7 +80,7 @@ def ray_tracer(s1, density, t_box, interpol, base, niter=None):
 	if niter is None:
 		niter = 10
 	for i in xrange(niter):
-		nray = 100000
+		nray = 200000
 		# Generate source point according to
 		# to the source density probability
 		points = density.random_sampling(nray)
@@ -133,7 +134,7 @@ def ray_tracer(s1, density, t_box, interpol, base, niter=None):
 		else:
 			M += Miter
 	
-		print("it", i,":", (i+1)*nray,"rays thrown")
+		print("it", i+1,":", (i+1)*nray,"rays thrown")
 	M = 255.0*M/np.amax(M)
 		    
 	return M

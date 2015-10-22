@@ -20,6 +20,8 @@ from preprocessing import *
 import geometry as geo
 import rayTracingMPI as ray
 import misc
+import export
+import pycuda
 
 comm = mpi.COMM_WORLD
 rank = comm.Get_rank()
@@ -69,7 +71,7 @@ target_box = [np.min(Y[:,0]), np.max(Y[:,0]), np.min(Y[:,1]), np.max(Y[:,1])]
 
 	
 ##### Ray tracing #####
-M = ray.ray_tracer(comm, s1, mu, target_box, interpol, target_base, niter=50)
+M = ray.ray_tracer(comm, s1, mu, target_box, interpol, target_base, niter=30)
 Mrecv = np.zeros((M.shape[0],M.shape[1]))
 
 comm.Reduce([M,mpi.DOUBLE],[Mrecv,mpi.DOUBLE],op=mpi.SUM,root=0)
@@ -79,6 +81,13 @@ if rank == 0:
 	Mrecv = 255.0*Mrecv/np.amax(Mrecv)
 	print ("Ray tracing:", time.clock() - t, "s")
 	plt.imshow(Mrecv, interpolation='nearest',
-				   vmin=0, vmax=255, cmap=plt.get_cmap('gray'))	
+				   vmin=0, vmax=255, cmap=plt.get_cmap('gray'))
+				   
+	##### Export of the scaled reflector in .off and .ioff files #####
+	points = np.array([Z[:,0],Z[:,1],psi_Z]).T
+	##export.export_improved_off('square_cameraman1e2.ioff', points, grad, T_Z)
+	#export.export_off('square_monge_1e3.off', points, T_Z)
+	export.export_off('square_monge_horiz.off', points, T_Z, rot=True, param=param)
+	
 	print ("Execution time:", time.clock() - debut, "s (CPU time)")
 	plt.show()
