@@ -302,7 +302,7 @@ def init_parameters(parser):
 	param['target'] = ['default']
 	#### Default target plan base ####
 	param['e_eta'] = [1.,0.,0.]
-	param['e_ksi'] = [0.,0.,1.]
+	param['e_xi'] = [0.,0.,1.]
 	param['n_plan'] = [0.,-10.,0.]
 	
 	# If a parameter file is given
@@ -329,7 +329,7 @@ def init_parameters(parser):
 						' is not a valid parameter and will be ignored.')
 			
 				e_eta = np.array([float(x) for x in param['e_eta']])
-				e_ksi = np.array([float(x) for x in param['e_ksi']])
+				e_xi = np.array([float(x) for x in param['e_xi']])
 				n_plan = np.array([float(x) for x in param['n_plan']])
 				
 				if param['source'][0] != 'default':
@@ -339,13 +339,13 @@ def init_parameters(parser):
 			
 				# Assert the base is orthogonal and 
 				# normalize e_eta e_ksi
-				assert(np.dot(e_eta,e_ksi)==0.)
-				cross_prod = np.cross(np.cross(e_eta,e_ksi),n_plan)
+				assert(np.dot(e_eta,e_xi)==0.)
+				cross_prod = np.cross(np.cross(e_eta,e_xi),n_plan)
 				assert(np.allclose(cross_prod,np.zeros(3)))
 				e_eta /= np.linalg.norm(e_eta)
-				e_ksi /= np.linalg.norm(e_ksi)
+				e_xi /= np.linalg.norm(e_xi)
 				param['e_eta'] = e_eta
-				param['e_ksi'] = e_ksi
+				param['e_xi'] = e_xi
 				param['n_plan'] = n_plan
 
 			finally:

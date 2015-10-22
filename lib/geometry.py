@@ -217,20 +217,20 @@ def spherical_to_gradient(theta,phi):
 		print("****spherical_to_gradient error: ", arg.msg)
 
 		
-def planar_to_spherical(eta,ksi,theta_0,phi_0,d):
+def planar_to_spherical(eta,xi,theta_0,phi_0,d):
 	"""
 	This function computes to conversion from planar coordinates
-	(eta, ksi) to spherical coordinates (theta, phi) on the unit sphere
+	(eta, xi) to spherical coordinates (theta, phi) on the unit sphere
 	for the reflector problem.
 	
 	Parameters
 	----------
 	eta : 1D array
-		Forms an orthonormal basis with ksi and the 
+		Forms an orthonormal basis with xi and the 
 		normal vector of the plane directed to 
 		the center of unit sphere
-	ksi : 1D array
-		Coordinate along ksi axis parallel to z axis
+	xi : 1D array
+		Coordinate along xi axis parallel to z axis
 	theta_0 : real
 		Coordinate theta of the plane origin
 	phi_0 : real
@@ -252,27 +252,24 @@ def planar_to_spherical(eta,ksi,theta_0,phi_0,d):
 	--------
 	Inverse Methods for Illumination Optics, Corien Prins
 	"""
-	try:
-		eta = np.asarray(eta, dtype=np.float64)
-		ksi = np.asarray(ksi, dtype=np.float64)
+	try:		
+		if len(xi.shape) > 1 or len(eta.shape) > 1:
+			raise NotProperShapeError("xi and eta must be 1D arrays.")
 		
-		if len(ksi.shape) > 1 or len(eta.shape) > 1:
-			raise NotProperShapeError("ksi and eta must be 1D arrays.")
-		
-		if ksi.shape != eta.shape:
-			raise NotProperShapeError("ksi and eta must have the same length.")
+		if xi.shape != eta.shape:
+			raise NotProperShapeError("xi and eta must have the same length.")
 			
-		diag = np.sqrt(eta*eta + ksi*ksi)
+		diag = np.sqrt(eta*eta + xi*xi)
 		r = np.sqrt(diag*diag + d*d)
 
 		r_eta = np.sqrt(d*d + eta*eta)
 
-		theta = np.arccos(d*np.cos(theta_0)/r_eta) - np.arcsin(ksi/r)
+		theta = np.arccos(d*np.cos(theta_0)/r_eta) - np.arcsin(xi/r)
 
-		if theta_0==0 and ksi==0:
+		if theta_0==0 and xi==0:
 			phi = phi_0 - np.pi/2
 		else:
-			phi = phi_0 - np.arctan(eta/(d*np.sin(theta_0)-ksi*np.cos(theta_0)))
+			phi = phi_0 - np.arctan(eta/(d*np.sin(theta_0)-xi*np.cos(theta_0)))
 		
 		return r,theta,phi
 		
@@ -302,16 +299,12 @@ def spherical_to_cartesian(r, theta, phi):
     x, y, z : reals
         Cartesian coordinates of the point
     """
-	try:
-		r = np.asarray(r, dtype=np.float64)
-		theta = np.asarray(theta, dtype=np.float64)
-		phi = np.asarray(phi, dtype=np.float64)
-		
+	try:		
 		if len(r.shape) > 1 or len(theta.shape) > 1 or len(phi.shape) > 1:
 			raise NotProperShapeError("r, theta, phi must be 1D arrays.")
 
 		if r.shape != theta.shape or r.shape != phi.shape:
-			raise NotProperShapeError("ksi and eta must have the same length.")
+			raise NotProperShapeError("phi and theta must have the same length.")
 
 		x = r * np.sin(theta) * np.cos(phi)
 		y = r * np.sin(theta) * np.sin(phi)
@@ -351,12 +344,12 @@ def plan_cartesian_equation(theta_0, phi_0, d):
 	eta_sph = planar_to_spherical(1.,0.,theta_0,phi_0,d)
 	eta_cart = np.asarray(spherical_to_cartesian(eta_sph[0],eta_sph[1],eta_sph[2]))
 	
-	ksi_sph = planar_to_spherical(0.,1.,theta_0,phi_0,d)
-	ksi_cart = np.asarray(spherical_to_cartesian(ksi_sph[0],ksi_sph[1],ksi_sph[2]))
+	xi_sph = planar_to_spherical(0.,1.,theta_0,phi_0,d)
+	xi_cart = np.asarray(spherical_to_cartesian(xi_sph[0],xi_sph[1],xi_sph[2]))
 
 	# Direction vectors of the plan in cartesian coordinates
 	u = eta_cart - plan_origin_cart
-	v = ksi_cart - plan_origin_cart
+	v = xi_cart - plan_origin_cart
 
 	# Coefficients of the plan cartesian equation
 	a = u[1] * v[2] - u[2] * v[1]
@@ -381,17 +374,17 @@ def plot_plan(a, b, c, d):
 	plt.show()
 
 
-def planar_to_gradient(eta, ksi, base, s1=None):
+def planar_to_gradient(eta, xi, base, s1=None):
 	"""
 	This function computes the surface derivatives of the reflector
-	for incident rays s1 and impact points of reflected rays in (eta,ksi)
+	for incident rays s1 and impact points of reflected rays in (eta,xi)
 	Parameters
 	----------
 	eta : 1D array
 		Coordinate eta on the target plane
-	ksi : 1D array
-		Coordinate ksi on the target plane
-	base : [0]e_eta , [1]e_ksi : Direct orthonormal 
+	xi : 1D array
+		Coordinate xi on the target plane
+	base : [0]e_eta , [1]e_xi : Direct orthonormal 
 		   basis of the target plan
 		   [2]n_plan : Normal vector to the target plan
 		   Its norm equals distance from plan to reflector.
@@ -408,7 +401,7 @@ def planar_to_gradient(eta, ksi, base, s1=None):
 	Inverse Methods for Illumination Optics, Corien Prins, chapter 5.3.1
     """
 	e_eta = base[0]
-	e_ksi =base[1]
+	e_xi =base[1]
 	n = base[2]
 	
 	if s1 is None:
@@ -426,9 +419,9 @@ def planar_to_gradient(eta, ksi, base, s1=None):
 		# The reflector is considered ponctual and
 		# as the origin of the coordinate system
 		s2 = np.zeros((len(eta),3))
-		s2[:,0] = eta*e_eta[0] + ksi*e_ksi[0] - d*n[0]
-		s2[:,1] = eta*e_eta[1] + ksi*e_ksi[1] - d*n[1]
-		s2[:,2] = eta*e_eta[2] + ksi*e_ksi[2] - d*n[2]
+		s2[:,0] = eta*e_eta[0] + xi*e_xi[0] - d*n[0]
+		s2[:,1] = eta*e_eta[1] + xi*e_xi[1] - d*n[1]
+		s2[:,2] = eta*e_eta[2] + xi*e_xi[2] - d*n[2]
 	
 		s2 = s2 / np.linalg.norm(s2, axis=1)[:, np.newaxis]
 	

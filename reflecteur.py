@@ -27,7 +27,7 @@ parser = argparse.ArgumentParser()
 param = init_parameters(parser)
 display_parameters(param)
 # Target base
-target_plane_base = [param['e_eta'],param['e_ksi'],param['n_plan']] 
+target_plane_base = [param['e_eta'],param['e_xi'],param['n_plan']] 
 # Source rays direction
 s1 = np.array([0.,0.,1.])
 
@@ -49,7 +49,7 @@ print ("Inputs processing:", t, "s")
 psi0 = ma.optimal_transport_presolve_2(grad, mu.vertices, Y_w=nu)
 psi = ma.optimal_transport_2(mu, grad, nu, w0=psi0, verbose=True)
 
-t -= time.clock()
+t = time.clock() - t
 print ("OT resolution:", t, "s")
 
 Z,T_Z,psi_Z = misc.eval_legendre_fenchel(mu, grad, psi)

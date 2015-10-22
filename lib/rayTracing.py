@@ -68,12 +68,12 @@ def ray_tracer(s1, density, t_box, interpol, base, niter=None):
 		enclosing square box of the target support
 		[ymin, xmax, ymin, ymax]
 	interpol : TriCubic interpolant of the reflector
-	base : [0]e_eta , [1]e_ksi : Direct orthonormal 
+	base : [0]e_eta , [1]e_xi : Direct orthonormal 
 		   basis of the target plan
 		   [2]n_plan : Normal vector to the target plan
 	"""	
 	e_eta = base[0]
-	e_ksi = base[1]
+	e_xi = base[1]
 	n_plan = base[2]
 	
 	M = None
@@ -93,7 +93,7 @@ def ray_tracer(s1, density, t_box, interpol, base, niter=None):
 		d = np.linalg.norm(n_plan)
 		psi = np.arccos(np.inner(-s2,n_plan/d))
 
-		a = np.inner(s2,e_ksi)
+		a = np.inner(s2,e_xi)
 		b = np.inner(s2,e_eta)
 
 		khi = np.zeros(a.shape)
@@ -112,23 +112,23 @@ def ray_tracer(s1, density, t_box, interpol, base, niter=None):
 		# computation of intersection of reflected rays
 		# on the target plan and selection of points
 		# inside t_box
-		ksi = d * np.tan(psi) * np.cos(khi)
+		xi = d * np.tan(psi) * np.cos(khi)
 		eta = d * np.tan(psi) * np.sin(khi)
 
 		eta_min = np.ones(len(eta)) * t_box[0]
 		eta_max = np.ones(len(eta)) * t_box[1]
-		ksi_min = np.ones(len(eta)) * t_box[2]
-		ksi_max = np.ones(len(eta)) * t_box[3]
+		xi_min = np.ones(len(eta)) * t_box[2]
+		xi_max = np.ones(len(eta)) * t_box[3]
 		J = np.logical_and(np.less_equal(eta,eta_max),
 						   np.greater_equal(eta,eta_min))
-		K = np.logical_and(np.less_equal(ksi,ksi_max),
-						   np.greater_equal(ksi,ksi_min))
+		K = np.logical_and(np.less_equal(xi,xi_max),
+						   np.greater_equal(xi,xi_min))
 		L = np.logical_and(J,K)
 
-		ksi = ksi[L]
+		xi = xi[L]
 		eta = eta[L]
 		
-		Miter = fill_sparse_matrix(eta, ksi, t_box)
+		Miter = fill_sparse_matrix(eta, xi, t_box)
 		if M is None:
 			M = Miter
 		else:
