@@ -1,6 +1,6 @@
 Reflector
 ====================
-This program is designed to compute the shape of a reflector surface which transform a given beam of light
+This program is designed to compute the shape of a reflector surface which transforms a given beam of light
 into a specified output intensity.
 
 Dependencies
@@ -10,6 +10,14 @@ Dependencies
 + matplotlib 1.4
 + pillow
 + mpi4py (optionnal)
+
+Dependencies installation
+-------------------------
+numpy, matplotlib, pillow and mpi4py are available via the python package manager pip:
+``` sh
+sudo pip install numpy matplotlib pillow mpi4py
+```
+For MongeAmpere et PyMongeAmpere, follow the instructions [here](https://github.com/mrgt/PyMongeAmpere/wiki)
 
 Run the program
 ===============
