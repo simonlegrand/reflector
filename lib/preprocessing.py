@@ -235,7 +235,7 @@ of a picture must be set in parameter file")
 		#img = ndimage.rotate(img,-90)
 		
 		ratio = float(np.shape(img)[0]) / np.shape(img)[1]
-		nlin = 200
+		nlin = 128
 		ncol = int(nlin / ratio)	
 		img = sp.misc.imresize(img, (nlin,ncol))
 		

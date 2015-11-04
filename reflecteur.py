@@ -46,7 +46,7 @@ t = time.clock() - debut
 print ("Inputs processing:", t, "s")
 
 ##### Optimal Transport problem resolution #####
-psi0 = ma.optimal_transport_presolve_2(grad, mu.vertices, Y_w=nu)
+psi0 = ma.optimal_transport_presolve_2(grad, mu.vertices, Y_w=nu, X_w=mu.values)
 psi = ma.optimal_transport_2(mu, grad, nu, w0=psi0, verbose=True)
 
 t = time.clock() - t
