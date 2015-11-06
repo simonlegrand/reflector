@@ -64,7 +64,6 @@ export.export_off('square_monge_1e3.off', points, T_Z)
 ##### Ray tracing #####
 M = ray.ray_tracer(s1, mu, target_plane_box, interpol, target_plane_base, niter=4)
 
-M = 255.0*M/np.amax(M)
 print ("Ray tracing:", time.clock() - t, "s")
 plt.imshow(M, interpolation='nearest',
 		       vmin=0, vmax=255, cmap=plt.get_cmap('gray'))
