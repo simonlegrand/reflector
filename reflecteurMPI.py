@@ -56,7 +56,8 @@ if rank == 0:
 	t = time.clock() - debut
 	print ("Inputs processing:", t, "s")
 
-	psi = ma.optimal_transport_2(mu, grad, nu, verbose=True)
+	psi0 = ma.optimal_transport_presolve_2(grad, mu.vertices, Y_w=nu, X_w=mu.values)
+	psi = ma.optimal_transport_2(mu, grad, nu, w0=psi0, verbose=True)
 	
 	t = time.clock() - t
 	print ("OT resolution:", t, "s")
@@ -71,7 +72,7 @@ target_box = [np.min(Y[:,0]), np.max(Y[:,0]), np.min(Y[:,1]), np.max(Y[:,1])]
 
 	
 ##### Ray tracing #####
-M = ray.ray_tracer(comm, s1, mu, target_box, interpol, target_base, niter=30)
+M = ray.ray_tracer(comm, s1, mu, target_box, interpol, target_base, niter=120)
 Mrecv = np.zeros((M.shape[0],M.shape[1]))
 
 comm.Reduce([M,mpi.DOUBLE],[Mrecv,mpi.DOUBLE],op=mpi.SUM,root=0)

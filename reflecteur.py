@@ -58,8 +58,8 @@ interpol = misc.make_cubic_interpolator(Z, T_Z, psi_Z, grad=grad)
 ##### Export of the scaled reflector in .off and .ioff files #####
 points = np.array([Z[:,0],Z[:,1],psi_Z]).T
 ##export.export_improved_off('square_cameraman1e2.ioff', points, grad, T_Z)
-#export.export_off('square_monge_1e3.off', points, T_Z)
-export.export_off('square_monge_1e3_horiz.off', points, T_Z, rot=True, param=param)
+export.export_off('square_monge_1e3.off', points, T_Z)
+#export.export_off('square_monge_1e3_horiz.off', points, T_Z, rot=True, param=param)
 
 ##### Ray tracing #####
 M = ray.ray_tracer(s1, mu, target_plane_box, interpol, target_plane_base, niter=4)
