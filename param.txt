@@ -1,8 +1,0 @@
-Reflector parameter file
-source	./examples/gaussianDisk1e4.txt
-target	./examples/cameraman.gif
-e_eta	0.	-1.	0.
-e_ksi	0.	0.	1.
-n_plan	-10.	0.	0.
-s_size	1.
-t_size	5.
