@@ -27,9 +27,7 @@ parser = argparse.ArgumentParser()
 param = init_parameters(parser)
 display_parameters(param)
 # Target base
-target_plane_base = [param['e_eta'],param['e_xi'],param['n_plan']] 
-# Source rays direction
-s1 = np.array([0.,0.,1.])
+target_plane_base = [param['e_eta'],param['e_xi'],param['n_plan']]
 
 ##### Source and target processing #####
 mu, Y, nu = input_preprocessing(param)
@@ -38,8 +36,8 @@ mu, Y, nu = input_preprocessing(param)
 source_box = [np.min(mu.vertices[:,0]), np.max(mu.vertices[:,0]), np.min(mu.vertices[:,1]), np.max(mu.vertices[:,1])]
 target_plane_box = [np.min(Y[:,0]), np.max(Y[:,0]), np.min(Y[:,1]), np.max(Y[:,1])]
 
-gradx, grady = geo.planar_to_gradient(Y[:,0],Y[:,1],target_plane_base,s1)
-grad = np.vstack([gradx,grady]).T
+p,q = geo.planar_to_gradient(Y[:,0],Y[:,1],target_plane_base)
+grad = np.vstack([p,q]).T
 
 print('Number of diracs: ', len(nu))
 t = time.clock() - debut
@@ -62,7 +60,7 @@ export.export_off('square_monge_1e3.off', points, T_Z)
 #export.export_off('square_monge_1e3_horiz.off', points, T_Z, rot=True, param=param)
 
 ##### Ray tracing #####
-M = ray.ray_tracer(s1, mu, target_plane_box, interpol, target_plane_base, niter=4)
+M = ray.ray_tracer(mu, target_plane_box, interpol, target_plane_base, niter=4)
 
 print ("Ray tracing:", time.clock() - t, "s")
 plt.imshow(M, interpolation='nearest',

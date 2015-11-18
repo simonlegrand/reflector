@@ -35,22 +35,19 @@ parser = argparse.ArgumentParser()
 param = init_parameters(parser)
 if rank == 0:
 	display_parameters(param)
-# Target base
 target_base = [param['e_eta'],param['e_xi'],param['n_plan']] 
-#Source rays direction
-s1 = np.array([0.,0.,1.])
 
 
 ##### Source and target processing #####
 mu, Y, nu = input_preprocessing(param)
 comm.Bcast([Y, mpi.DOUBLE],0)
 comm.Bcast([nu, mpi.DOUBLE],0)
-gradx, grady = geo.planar_to_gradient(Y[:,0], Y[:,1], target_base, s1)
-grad = np.vstack([gradx,grady]).T
+p,q = geo.planar_to_gradient(Y[:,0], Y[:,1], target_base)
+grad = np.vstack([p,q]).T
 
 
 ##### Optimal Transport problem resolution #####
-psi = np.empty(len(gradx))
+psi = np.empty(len(p))
 if rank == 0:
 	print('Number of diracs: ', len(nu))
 	t = time.clock() - debut
@@ -72,7 +69,7 @@ target_box = [np.min(Y[:,0]), np.max(Y[:,0]), np.min(Y[:,1]), np.max(Y[:,1])]
 
 	
 ##### Ray tracing #####
-M = ray.ray_tracer(comm, s1, mu, target_box, interpol, target_base, niter=120)
+M = ray.ray_tracer(comm, mu, target_box, interpol, target_base, niter=60)
 Mrecv = np.zeros((M.shape[0],M.shape[1]))
 
 comm.Reduce([M,mpi.DOUBLE],[Mrecv,mpi.DOUBLE],op=mpi.SUM,root=0)

@@ -51,7 +51,7 @@ def reflection(grid, I, s1):
 	return s2
 
 
-def ray_tracer(comm, s1, density, t_box, interpol, base, niter=None):
+def ray_tracer(comm, density, t_box, interpol, base, niter=None, s1=[0.,0.,1.]):
 	"""
 	This function computes the simulation of reflection on the reflector
 	and plot the image produced on the target screen.
