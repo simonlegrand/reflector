@@ -2,6 +2,6 @@ Reflector parameter file
 source	./examples/gaussianDisk1e4.txt	1.	1.
 target	./examples/cameraman.gif	3.	3.
 e_eta	0.	-1.	0.
-e_ksi	0.	0.	1.
+e_xi	0.	0.	1.
 n_plan	-10.	0.	0.
 
