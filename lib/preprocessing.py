@@ -235,9 +235,11 @@ of a picture must be set in parameter file")
 		#img = ndimage.rotate(img,-90)
 		
 		ratio = float(np.shape(img)[0]) / np.shape(img)[1]
-		nlin = 128
-		ncol = int(nlin / ratio)	
-		img = sp.misc.imresize(img, (nlin,ncol))
+		
+		# Resize if needed
+		#nlin = 60
+		#ncol = int(nlin / ratio)	
+		#img = sp.misc.imresize(img, (nlin,ncol))
 		
 		img = np.asarray(img, dtype=float)
 		img = img / 255.0
@@ -325,8 +327,7 @@ def init_parameters(parser):
 					if data[0] in param:
 						param[data[0]] = data[1:]
 					else:
-						print(data[0],
-						' is not a valid parameter and will be ignored.')
+						print(data[0],' is not a valid parameter and will be ignored.')
 			
 				e_eta = np.array([float(x) for x in param['e_eta']])
 				e_xi = np.array([float(x) for x in param['e_xi']])
