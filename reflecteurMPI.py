@@ -39,11 +39,11 @@ target_base = [param['e_eta'],param['e_xi'],param['n_plan']]
 
 
 ##### Source and target processing #####
-mu, Y, nu = input_preprocessing(param)
-comm.Bcast([Y, mpi.DOUBLE],0)
+mu, P, nu = input_preprocessing(param)
+comm.Bcast([P, mpi.DOUBLE],0)
 comm.Bcast([nu, mpi.DOUBLE],0)
-p,q = geo.planar_to_gradient(Y[:,0], Y[:,1], target_base)
-grad = np.vstack([p,q]).T
+p,q = geo.planar_to_gradient(P[:,0], P[:,1], target_base)
+Y = np.vstack([p,q]).T
 
 
 ##### Optimal Transport problem resolution #####
@@ -53,23 +53,23 @@ if rank == 0:
 	t = time.clock() - debut
 	print ("Inputs processing:", t, "s")
 
-	psi0 = ma.optimal_transport_presolve_2(grad, mu.vertices, Y_w=nu, X_w=mu.values)
-	psi = ma.optimal_transport_2(mu, grad, nu, w0=psi0, verbose=True)
+	psi0 = ma.optimal_transport_presolve_2(Y, mu.vertices, Y_w=nu, X_w=mu.values)
+	psi = ma.optimal_transport_2(mu, Y, nu, w0=psi0, verbose=True)
 	
 	t = time.clock() - t
 	print ("OT resolution:", t, "s")
 	
 comm.Bcast([psi, mpi.DOUBLE],0)
 
-Z,T_Z,psi_Z = misc.eval_legendre_fenchel(mu, grad, psi)
-interpol = misc.make_cubic_interpolator(Z,T_Z,psi_Z,grad=grad)
+Z,T_Z,u_Z = misc.eval_legendre_fenchel(mu, Y, psi)
+interpol = misc.make_cubic_interpolator(Z,T_Z,u_Z,grad=Y)
 
 source_box = [np.min(Z[:,0]), np.max(Z[:,0]), np.min(Z[:,1]), np.max(Z[:,1])]
-target_box = [np.min(Y[:,0]), np.max(Y[:,0]), np.min(Y[:,1]), np.max(Y[:,1])]
+target_box = [np.min(P[:,0]), np.max(P[:,0]), np.min(P[:,1]), np.max(P[:,1])]
 
 	
 ##### Ray tracing #####
-M = ray.ray_tracer(comm, mu, target_box, interpol, target_base, niter=60)
+M = ray.ray_tracer(comm, mu, target_box, interpol, target_base, niter=6)
 Mrecv = np.zeros((M.shape[0],M.shape[1]))
 
 comm.Reduce([M,mpi.DOUBLE],[Mrecv,mpi.DOUBLE],op=mpi.SUM,root=0)
@@ -82,7 +82,7 @@ if rank == 0:
 				   vmin=0, vmax=255, cmap=plt.get_cmap('gray'))
 				   
 	##### Export of the scaled reflector in .off and .ioff files #####
-	points = np.array([Z[:,0],Z[:,1],psi_Z]).T
+	points = np.array([Z[:,0],Z[:,1],u_Z]).T
 	##export.export_improved_off('square_cameraman1e2.ioff', points, grad, T_Z)
 	#export.export_off('square_monge_1e3.off', points, T_Z)
 	export.export_off('square_monge_horiz.off', points, T_Z, rot=True, param=param)
