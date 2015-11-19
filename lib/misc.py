@@ -103,8 +103,8 @@ def plot_density(mu):
 def eval_legendre_fenchel(mu, Y, psi):
 	"""
 	This function returns centers of laguerre cells Z,
-	the delaunay triangulation of these points and the 
-	Legendre-Fenchel transform of psi.
+	the delaunay triangulation of these points and u_Z, the 
+	Legendre-Fenchel transform of psi defined on Z.
 	
 	Parameters
 	----------
@@ -113,7 +113,7 @@ def eval_legendre_fenchel(mu, Y, psi):
 	Y : 2D array
 		Points on the Y ensemble
 	psi : 1D array
-		Functionnal values on Y
+		Kantorovich potential values at Y
 			
 	Returns
 	-------
@@ -121,13 +121,12 @@ def eval_legendre_fenchel(mu, Y, psi):
 		Laguerre cells centers coordinates
 	T : delaunay_2 object
 		Weighted Delaunay triangulation of Z
-	psi_star_tilde : 1D array
+	u_Z : 1D array
 		Legendre-Fenchel transform of psi
 	"""
 	# We find the center of each Laguerre cell
 	# or their projection on the boundary for the cells that 
 	# intersect the boundary
-	#Z = mu.lloyd(Y,psi)[0]
 	X = mu.vertices
 	hull = ConvexHull(X)
 	points = X[hull.vertices]
@@ -135,6 +134,7 @@ def eval_legendre_fenchel(mu, Y, psi):
 	Z = ma.ma.conforming_lloyd_2(mu,Y,psi,points)[0]
 	
 	# By definition, psi^*(z) = min_{y\in Y} |y - z|^2 - psi_y
+	# Correspond to the c-transform of psi.
 	# As Z[i] is in the Laguerre cell of Y[i], the formula can be simplified:
 	psi_star = np.square(Y[:,0] - Z[:,0]) + np.square(Y[:,1] - Z[:,1]) - psi
 	T = ma.delaunay_2(Z, psi_star)
@@ -155,18 +155,18 @@ def eval_legendre_fenchel(mu, Y, psi):
 		i += 1
 	T = np.array(T_tmp)
 	
-	# Modification to get a convex function \tilde{psi^*} such
-	# that \grad \tilde{\psi^*}(z) = y if z \in Lag_Y^\psi(y)
-	psi_star_tilde = (np.square(Z[:,0]) + np.square(Z[:,1]))/2 - psi_star/2
+	# Modification to get a convex function u(z) such
+	# that \grad u(z) = y if z \in Lag_Y^\psi(y)
+	u_Z = (np.square(Z[:,0]) + np.square(Z[:,1]))/2 - psi_star/2
 	
-	return Z,T,psi_star_tilde
+	return Z,T,u_Z
 	
-def make_cubic_interpolator(Z,T,psi,grad):
+def make_cubic_interpolator(Z,T,u,grad):
 	"""
 	This function returns a cubic interpolant
 	of function psi.
 	"""
 	T = tri.Triangulation(Z[:,0],Z[:,1],T)
-	interpol = tri.CubicTriInterpolator(T, psi, kind='user', dz=(grad[:,0],grad[:,1]))
-	#interpol = tri.LinearTriInterpolator(T, psi)
+	interpol = tri.CubicTriInterpolator(T, u, kind='user', dz=(grad[:,0],grad[:,1]))
+	#interpol = tri.LinearTriInterpolator(T, u)
 	return interpol

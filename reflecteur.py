@@ -30,31 +30,31 @@ display_parameters(param)
 target_plane_base = [param['e_eta'],param['e_xi'],param['n_plan']]
 
 ##### Source and target processing #####
-mu, Y, nu = input_preprocessing(param)
+mu, P, nu = input_preprocessing(param)
 #misc.plot_density(mu)
 
 source_box = [np.min(mu.vertices[:,0]), np.max(mu.vertices[:,0]), np.min(mu.vertices[:,1]), np.max(mu.vertices[:,1])]
-target_plane_box = [np.min(Y[:,0]), np.max(Y[:,0]), np.min(Y[:,1]), np.max(Y[:,1])]
+target_plane_box = [np.min(P[:,0]), np.max(P[:,0]), np.min(P[:,1]), np.max(P[:,1])]
 
-p,q = geo.planar_to_gradient(Y[:,0],Y[:,1],target_plane_base)
-grad = np.vstack([p,q]).T
+p,q = geo.planar_to_gradient(P[:,0],P[:,1],target_plane_base)
+Y = np.vstack([p,q]).T
 
 print('Number of diracs: ', len(nu))
 t = time.clock() - debut
 print ("Inputs processing:", t, "s")
 
 ##### Optimal Transport problem resolution #####
-psi0 = ma.optimal_transport_presolve_2(grad, mu.vertices, Y_w=nu, X_w=mu.values)
-psi = ma.optimal_transport_2(mu, grad, nu, w0=psi0, verbose=True)
+psi0 = ma.optimal_transport_presolve_2(Y, mu.vertices, Y_w=nu, X_w=mu.values)
+psi = ma.optimal_transport_2(mu, Y, nu, w0=psi0, verbose=True)
 
 t = time.clock() - t
 print ("OT resolution:", t, "s")
 
-Z,T_Z,psi_Z = misc.eval_legendre_fenchel(mu, grad, psi)
-interpol = misc.make_cubic_interpolator(Z, T_Z, psi_Z, grad=grad)
+Z,T_Z,u_Z = misc.eval_legendre_fenchel(mu, Y, psi)
+interpol = misc.make_cubic_interpolator(Z, T_Z, u_Z, grad=Y)
 
 ##### Export of the scaled reflector in .off and .ioff files #####
-points = np.array([Z[:,0],Z[:,1],psi_Z]).T
+points = np.array([Z[:,0],Z[:,1],u_Z]).T
 ##export.export_improved_off('square_cameraman1e2.ioff', points, grad, T_Z)
 export.export_off('square_monge_1e3.off', points, T_Z)
 #export.export_off('square_monge_1e3_horiz.off', points, T_Z, rot=True, param=param)

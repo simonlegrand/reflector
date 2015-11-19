@@ -92,31 +92,31 @@ def input_preprocessing(parameters):
 		#y = np.array([1.5,0.25,-0.5, -0.5, 0.25])
 		tri = np.array([x,y]).T
 		dens_target = ma.Density_2(tri)
-		Y = ma.optimized_sampling_2(dens_target,Ndiracs)
+		P = ma.optimized_sampling_2(dens_target,Ndiracs)
 		nu = np.ones(Ndiracs) * (mu.mass() / Ndiracs)
 		
 	else:
 		extension_target = os.path.splitext(target_name)[1]
 
 		if extension_target == ".txt":
-			Y, nu = read_data(target_name, target_geom)
+			P, nu = read_data(target_name, target_geom)
 			nu = nu * (mu.mass() / sum(nu))
 		
 		else:
 			# For a picture, number of dirac equals
 			# number of pixels (set in read_image())
-			Y, nu = read_image(target_name, target_geom)
+			P, nu = read_image(target_name, target_geom)
 			
 			# Null pixels are removed
 			zero = np.zeros(len(nu))
 			J = np.greater(nu,zero)
-			Y = Y[J]
+			P = P[J]
 			nu = nu[J]
 			
 			# Mass equalization
 			nu = nu * (mu.mass()/sum(nu))
 
-	return mu, Y, nu
+	return mu, P, nu
 
 
 def read_data(fn, geom):
