@@ -9,7 +9,6 @@ sys.path.append('../PyMongeAmpere-build/lib')
 sys.path.append('./lib')
 
 import numpy as np
-import cPickle
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 
@@ -60,7 +59,7 @@ export.export_off('square_monge_1e3.off', points, T_Z)
 #export.export_off('square_monge_1e3_horiz.off', points, T_Z, rot=True, param=param)
 
 ##### Ray tracing #####
-M = ray.ray_tracer(mu, target_plane_box, interpol, target_plane_base, niter=4)
+M = ray.ray_tracer(mu, target_plane_box, interpol, target_plane_base, niter=3)
 
 print ("Ray tracing:", time.clock() - t, "s")
 plt.imshow(M, interpolation='nearest',

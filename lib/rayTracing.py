@@ -3,7 +3,7 @@ from __future__ import print_function
 import sys
 import numpy as np
 import scipy.sparse as sparse
-
+import numpy.matlib
 sys.path.append('./lib')
 import misc
 class GeometricError(Exception):
@@ -85,17 +85,20 @@ def ray_tracer(density, t_box, interpol, base, niter=None, s1=[0.,0.,1.]):
 		# to the source density probability
 		points = density.random_sampling(nray)
 		s2 = reflection(points, interpol, s1)
-
+		#print(min(s2[:,0]),max(s2[:,0]), min(s2[:,1]),max(s2[:,1]), min(s2[:,2]),max(s2[:,2]))
 		##### New spherical coordinates #####
 		# psi is the inclination with respect
 		# to -n_plan and khi is the azimutal 
 		# angle around n_plan
 		d = np.linalg.norm(n_plan)
-		psi = np.arccos(np.inner(-s2,n_plan/d))
-
-		a = np.inner(s2,e_xi)
-		b = np.inner(s2,e_eta)
-
+		n = n_plan/d
+		
+		scal = s2[:,0]*n[0] + s2[:,1]*n[1] + s2[:,2]*n[2]
+		psi = np.arccos(-scal)
+		
+		a = s2[:,0]*e_xi[0] + s2[:,1]*e_xi[1] + s2[:,2]*e_xi[2]
+		b = s2[:,0]*e_eta[0] + s2[:,1]*e_eta[1] + s2[:,2]*e_eta[2]
+		
 		khi = np.zeros(a.shape)
 		zero = np.zeros(a.shape)
 		J = np.logical_and(np.greater_equal(a,zero),
@@ -127,7 +130,7 @@ def ray_tracer(density, t_box, interpol, base, niter=None, s1=[0.,0.,1.]):
 
 		xi = xi[L]
 		eta = eta[L]
-		
+
 		Miter = fill_sparse_matrix(eta, xi, t_box)
 		if M is None:
 			M = Miter

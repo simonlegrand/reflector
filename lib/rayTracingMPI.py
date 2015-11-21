@@ -98,10 +98,13 @@ def ray_tracer(comm, density, t_box, interpol, base, niter=None, s1=[0.,0.,1.]):
 		# to -n_plan and khi is the azimutal 
 		# angle around n_plan
 		d = np.linalg.norm(n_plan)
-		psi = np.arccos(np.inner(-s2,n_plan/d))
-
-		a = np.inner(s2,e_xi)
-		b = np.inner(s2,e_eta)
+		n = n_plan/d
+		
+		scal = s2[:,0]*n[0] + s2[:,1]*n[1] + s2[:,2]*n[2]
+		psi = np.arccos(-scal)
+		
+		a = s2[:,0]*e_xi[0] + s2[:,1]*e_xi[1] + s2[:,2]*e_xi[2]
+		b = s2[:,0]*e_eta[0] + s2[:,1]*e_eta[1] + s2[:,2]*e_eta[2]
 
 		khi = np.zeros(a.shape)
 		zero = np.zeros(a.shape)

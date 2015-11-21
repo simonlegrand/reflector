@@ -1,4 +1,3 @@
-#!/usr/bin/python
 from __future__ import print_function
 
 import sys
@@ -21,7 +20,6 @@ import geometry as geo
 import rayTracingMPI as ray
 import misc
 import export
-import pycuda
 
 comm = mpi.COMM_WORLD
 rank = comm.Get_rank()
@@ -69,7 +67,11 @@ target_box = [np.min(P[:,0]), np.max(P[:,0]), np.min(P[:,1]), np.max(P[:,1])]
 
 	
 ##### Ray tracing #####
+<<<<<<< HEAD
+M = ray.ray_tracer(comm, mu, target_box, interpol, target_base, niter=4)
+=======
 M = ray.ray_tracer(comm, mu, target_box, interpol, target_base, niter=6)
+>>>>>>> 6c522110e1d74b3bc965d777e8e259c4a2196b7b
 Mrecv = np.zeros((M.shape[0],M.shape[1]))
 
 comm.Reduce([M,mpi.DOUBLE],[Mrecv,mpi.DOUBLE],op=mpi.SUM,root=0)
